@@ -1,5 +1,7 @@
-const ALLOWED_STOPS = ['001313', '001359'];
-const ROUTES = ['77', '99'];
+const STOP_ROUTES = {
+  '001293': ['77', '99'],           // Primary: Lei King Wan (Grand Promenade)
+  '001303': ['82', '85', '102', '682'], // Plan B: Sai Wan Ho Civic Centre
+};
 const BASE = 'https://rt.data.gov.hk/v2/transport/citybus/eta/CTB';
 
 function corsHeaders(origin) {
@@ -15,7 +17,8 @@ export async function GET(request) {
   const url = new URL(request.url);
   const stop = (url.searchParams.get('stop') || '').trim();
 
-  if (!ALLOWED_STOPS.includes(stop)) {
+  const routes = STOP_ROUTES[stop];
+  if (!routes) {
     return new Response(JSON.stringify({ error: 'Invalid stop' }), {
       status: 400,
       headers: corsHeaders(),
@@ -23,7 +26,7 @@ export async function GET(request) {
   }
 
   const results = await Promise.all(
-    ROUTES.map((route) =>
+    routes.map((route) =>
       fetch(`${BASE}/${stop}/${route}`, {
         signal: AbortSignal.timeout(8000),
         headers: { Accept: 'application/json' },

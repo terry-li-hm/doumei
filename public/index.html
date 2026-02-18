@@ -193,6 +193,32 @@
     }
     .then-item:first-child { opacity: 0.7; font-weight: 500; }
 
+    /* --- Plan B --- */
+
+    #plan-b {
+      margin-top: clamp(24px, 5vh, 40px);
+      text-align: center;
+    }
+    #plan-b-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 8px;
+    }
+    #plan-b-list {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 8px 16px;
+    }
+    .plan-b-item {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: clamp(14px, 3.5vw, 17px);
+      font-variant-numeric: tabular-nums;
+      color: var(--muted);
+    }
+
     /* --- Updated timestamp --- */
 
     #updated {
@@ -215,7 +241,7 @@
 <body>
   <header>
     <div id="trip-label">To Kornhill</div>
-    <div id="trip-sublabel">from Tai Hong House</div>
+    <div id="trip-sublabel">from Grand Promenade</div>
   </header>
 
   <main id="main-tap">
@@ -223,6 +249,10 @@
     <div id="hero">--</div>
     <div id="status" role="status" aria-live="polite">--</div>
     <div id="then-list"></div>
+    <section id="plan-b" hidden>
+      <div id="plan-b-label">Walk to SKW Rd</div>
+      <div id="plan-b-list"></div>
+    </section>
     <div id="updated"></div>
   </main>
 

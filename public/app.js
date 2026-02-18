@@ -1,6 +1,8 @@
 /* --- Constants --- */
 
-const STOP_ID = '001313';
+const STOP_ID = '001293';
+const PLANB_STOP = '001303';
+// const TRAM_STOP = '10W'; // tram API dead — re-enable if it comes back
 const WALK_MINS = 4;
 const RUN_MINS = 2;
 const STALE_MS = 60000;
@@ -14,6 +16,8 @@ let refreshTimer = null;
 let displayTimer = null;
 let currentETAs = [];
 let lastFetchTime = 0;
+let planBETAs = [];
+let planBFetched = false;
 
 /* --- Helpers --- */
 
@@ -53,8 +57,12 @@ function updateDisplay() {
     route.textContent = '--';
     status.textContent = lastFetchTime ? 'No bus soon' : '';
     thenList.innerHTML = '';
+    updatePlanB(lastFetchTime && !document.body.classList.contains('stale-data'));
     return;
   }
+
+  // Hide Plan B when primary bus is available
+  document.getElementById('plan-b').hidden = true;
 
   // Primary bus
   const next = active[0];
@@ -80,6 +88,52 @@ function updateDisplay() {
       + `then ${after.route} · ${afterText}</div>`;
   } else {
     thenList.innerHTML = '';
+  }
+}
+
+/* --- Plan B --- */
+
+function updatePlanB(show) {
+  const el = document.getElementById('plan-b');
+  if (!show) { el.hidden = true; return; }
+
+  if (!planBFetched) { fetchPlanB(); return; }
+
+  const active = planBETAs.filter(e => minutesUntil(e.eta) > 0);
+  if (active.length === 0) { el.hidden = true; return; }
+
+  el.hidden = false;
+  const list = document.getElementById('plan-b-list');
+  list.innerHTML = active.slice(0, 4).map(e => {
+    const mins = minutesUntil(e.eta);
+    const text = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
+    return `<div class="plan-b-item">${e.route} · ${text}</div>`;
+  }).join('');
+}
+
+async function fetchPlanB() {
+  try {
+    const busRes = await fetch(`/api/eta?stop=${PLANB_STOP}`);
+    planBETAs = [];
+
+    if (busRes.ok) {
+      const busData = await busRes.json();
+      for (const rd of busData.data || []) {
+        for (const e of rd.data || []) {
+          if (!e.eta) continue;
+          const mins = minutesUntil(e.eta);
+          if (mins > 0 && mins <= MAX_MINUTES) {
+            planBETAs.push({ route: rd.route, eta: e.eta });
+          }
+        }
+      }
+    }
+
+    planBETAs.sort((a, b) => new Date(a.eta) - new Date(b.eta));
+    planBFetched = true;
+    updatePlanB(true);
+  } catch (err) {
+    console.error('Plan B fetch error:', err);
   }
 }
 
@@ -117,6 +171,7 @@ async function fetchETAs() {
     const data = await res.json();
     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
     lastFetchTime = Date.now();
+    planBFetched = false;
     document.body.classList.remove('stale-data');
     renderUI(data, false);
   } catch (err) {
