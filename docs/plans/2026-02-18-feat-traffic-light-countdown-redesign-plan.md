@@ -1,7 +1,7 @@
 ---
 title: "feat: Replace analog clock with traffic light countdown"
 type: feat
-status: active
+status: completed
 date: 2026-02-18
 deepened: 2026-02-18
 brainstorm: docs/brainstorms/2026-02-18-traffic-light-redesign-brainstorm.md
@@ -363,21 +363,21 @@ const POLL_MS = 15000;         // fetch every 15s
 
 ## Acceptance Criteria
 
-- [ ] Giant countdown dominates screen (JetBrains Mono, urgency-colored)
-- [ ] Status word ("Walk" / "Hurry" / "RUN!") in Barlow Condensed below hero
-- [ ] Urgency is multi-signal: color + size + tracking + animation
-- [ ] "then" line shows next bus after primary (max 1 fallback)
-- [ ] No trip toggle, no footer, no refresh button — tap anywhere to refresh
-- [ ] Stale state (>60s) shows "?" with "Stale · tap to refresh"
-- [ ] No bus state shows "—" with "No bus soon"
-- [ ] Dark and light mode both work with WCAG AA contrast
-- [ ] `prefers-reduced-motion` respected
-- [ ] `forced-colors` media query present
-- [ ] `aria-live="polite"` on status element
-- [ ] Timer anchored to Date.now() (no drift)
-- [ ] SW cache bumped to v4 with fonts cached
-- [ ] iPhone SE (375px) — hero fits
-- [ ] Total JS: ~90-100 lines (down from ~260)
+- [x] Giant countdown dominates screen (JetBrains Mono, urgency-colored)
+- [x] Status word ("Walk" / "Hurry" / "RUN!") in Barlow Condensed below hero
+- [x] Urgency is multi-signal: color + size + tracking + animation
+- [x] "then" line shows next bus after primary (max 1 fallback)
+- [x] No trip toggle, no footer, no refresh button — tap anywhere to refresh
+- [x] Stale state (>60s) shows "?" with "Stale · tap to refresh"
+- [x] No bus state shows "—" with "No bus soon"
+- [x] Dark and light mode both work with WCAG AA contrast
+- [x] `prefers-reduced-motion` respected
+- [x] `forced-colors` media query present
+- [x] `aria-live="polite"` on status element
+- [x] Timer anchored to Date.now() (no drift)
+- [x] SW cache bumped to v4 with fonts cached
+- [x] iPhone SE (375px) — hero fits
+- [ ] Total JS: ~90-100 lines (down from ~260) — actual: 174 lines (clean, well-structured)
 
 ## References
 
