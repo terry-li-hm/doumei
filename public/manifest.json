@@ -1,6 +1,6 @@
 {
-  "name": "Bus ETA",
-  "short_name": "Bus ETA",
+  "name": "\u5230\u672a Dou Mei",
+  "short_name": "\u5230\u672a",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
