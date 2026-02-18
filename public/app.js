@@ -9,12 +9,11 @@ const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
 const CX = 150, CY = 150;
 const R_FACE = 143;
-const R_DOT_OUT = 133;  // Route 77 dots
-const R_DOT_IN = 120;   // Route 99 dots
-const DOT_R = 5;         // dot radius
-const R_LBL_OUT = 147;  // label radius outside outer dots
-const R_LBL_IN = 106;   // label radius inside inner dots
-const LBL_OFFSET = 14;  // radial offset for overlapping labels
+const R_DOT_OUT = 133;  // outer ring dots
+const R_DOT_IN = 120;   // inner ring dots
+const DOT_R = 5;
+const R_LBL_OUT = 147;  // label outside outer ring
+const R_LBL_IN = 106;   // label inside inner ring
 const NS = 'http://www.w3.org/2000/svg';
 
 /* --- State --- */
@@ -31,11 +30,6 @@ let dataLoaded = false;
 function polar(r, deg) {
   const rad = (deg - 90) * Math.PI / 180;
   return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
-}
-
-function angleDist(a, b) {
-  const d = Math.abs(a - b) % 360;
-  return d > 180 ? 360 - d : d;
 }
 
 function wedgePath(r, start, end) {
@@ -132,39 +126,28 @@ function renderBusArcs(data, stale) {
 }
 
 function drawArcs() {
-  const outer = document.getElementById('arcs-outer');
-  const inner = document.getElementById('arcs-inner');
-  outer.replaceChildren();
-  inner.replaceChildren();
+  const g = document.getElementById('bus-markers');
+  g.replaceChildren();
 
-  const placed = { outer: [], inner: [] }; // track label angles per ring
-
-  for (const e of currentETAs) {
+  for (let i = 0; i < currentETAs.length; i++) {
+    const e = currentETAs[i];
     const t = new Date(e.eta);
     const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
-    const isOuter = e.route === '77';
-    const r = isOuter ? R_DOT_OUT : R_DOT_IN;
-    const grp = isOuter ? outer : inner;
-    const ring = isOuter ? 'outer' : 'inner';
+    const isOuter = i % 2 === 0; // alternate rings
     const sc = e.scheduled ? ' scheduled' : '';
 
     // Dot
-    const pos = polar(r, deg);
+    const pos = polar(isOuter ? R_DOT_OUT : R_DOT_IN, deg);
     const dot = document.createElementNS(NS, 'circle');
     dot.setAttribute('cx', pos.x);
     dot.setAttribute('cy', pos.y);
     dot.setAttribute('r', DOT_R);
     dot.setAttribute('class', 'bus-dot' + sc);
-    grp.appendChild(dot);
+    g.appendChild(dot);
 
-    // Label — offset radially if close to a previous label on same ring
+    // Label
     const mins = minutesUntil(e.eta);
-    let labelR = isOuter ? R_LBL_OUT : R_LBL_IN;
-    const tooClose = placed[ring].some(a => angleDist(deg, a) < 15);
-    if (tooClose) labelR += isOuter ? LBL_OFFSET : -LBL_OFFSET;
-    placed[ring].push(deg);
-
-    const lpos = polar(labelR, deg);
+    const lpos = polar(isOuter ? R_LBL_OUT : R_LBL_IN, deg);
     const txt = document.createElementNS(NS, 'text');
     txt.setAttribute('x', lpos.x);
     txt.setAttribute('y', lpos.y);
@@ -172,7 +155,7 @@ function drawArcs() {
     txt.setAttribute('dominant-baseline', 'central');
     txt.setAttribute('class', 'dot-label' + sc);
     txt.textContent = mins < 1 ? '<1' : `${Math.floor(mins)}m`;
-    grp.appendChild(txt);
+    g.appendChild(txt);
   }
 }
 
