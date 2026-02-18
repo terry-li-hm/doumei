@@ -101,8 +101,9 @@
     #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
     #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
     #center-dot { fill: var(--accent); }
+    #bezel { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.2; }
 
-    .bus-dot { fill: var(--accent); }
+    .bus-dot { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
     .bus-dot.imminent { animation: pulse 1.5s ease-in-out infinite; }
     .scheduled { opacity: 0.45; }
 
@@ -170,6 +171,7 @@
 
   <main>
     <svg id="clock" viewBox="0 0 300 300" role="img" aria-label="Analog clock showing bus arrival times">
+      <circle id="bezel" cx="150" cy="150" r="143" />
       <g id="ticks"></g>
       <g id="bus-markers"></g>
       <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />
