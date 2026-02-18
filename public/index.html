@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-urgency="none">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -7,40 +7,51 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Doumei">
   <meta name="theme-color" content="#0f172a">
-  <meta property="og:title" content="到未 Dou Mei">
-  <meta property="og:description" content="Bus ETA clock for Hong Kong">
+  <meta property="og:title" content="Doumei">
+  <meta property="og:description" content="Bus ETA for Hong Kong">
   <meta property="og:image" content="/icon-1024.png">
-  <title>&#x5230;&#x672A; Dou Mei</title>
+  <title>Doumei</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="apple-touch-icon" href="/icon-192.png">
+  <link rel="preload" href="/fonts/jetbrains-mono.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="/fonts/barlow-condensed-700.woff2" as="font" type="font/woff2" crossorigin>
   <style>
+    @font-face {
+      font-family: 'JetBrains Mono';
+      src: url('/fonts/jetbrains-mono.woff2') format('woff2');
+      font-weight: 700 800;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Barlow Condensed';
+      src: url('/fonts/barlow-condensed-700.woff2') format('woff2');
+      font-weight: 700;
+      font-display: swap;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
       --bg: #0f172a;
-      --surface: #1e293b;
       --text: #f1f5f9;
-      --muted: #94a3b8;
-      --accent: #38bdf8;
+      --muted: #64748b;
       --r77: #7dd3fc;
       --r99: #fbbf24;
-      --scheduled: #f59e0b;
-      --hand-hour: #64748b;
-      --hand-min: #f1f5f9;
+      --urgency-green: #4ade80;
+      --urgency-amber: #fbbf24;
+      --urgency-red: #f87171;
     }
 
     @media (prefers-color-scheme: light) {
       :root {
         --bg: #f8fafc;
-        --surface: #ffffff;
         --text: #0f172a;
-        --muted: #64748b;
-        --accent: #0284c7;
+        --muted: #94a3b8;
         --r77: #1e40af;
         --r99: #c2410c;
-        --scheduled: #d97706;
-        --hand-hour: #94a3b8;
-        --hand-min: #0f172a;
+        --urgency-green: #16a34a;
+        --urgency-amber: #d97706;
+        --urgency-red: #dc2626;
       }
     }
 
@@ -52,34 +63,15 @@
       padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
       display: flex;
       flex-direction: column;
+      transition: background-color 1s ease 0.2s;
     }
 
     header {
       padding: 16px 20px 4px;
       text-align: center;
     }
-
-    #trip-label {
-      font-size: 22px;
-      font-weight: 700;
-    }
-
-    #trip-sublabel {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
-
-    #stale-badge {
-      display: none;
-      font-size: 11px;
-      background: var(--scheduled);
-      color: #000;
-      padding: 2px 6px;
-      border-radius: 4px;
-      margin-left: 6px;
-      vertical-align: middle;
-    }
+    #trip-label { font-size: 22px; font-weight: 700; }
+    #trip-sublabel { font-size: 13px; color: var(--muted); margin-top: 2px; }
 
     main {
       flex: 1;
@@ -88,122 +80,151 @@
       align-items: center;
       justify-content: center;
       padding: 0 20px;
-    }
-
-    #clock {
-      width: min(85vw, 360px);
-      height: auto;
-      overflow: hidden;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
     }
+    main:active { transform: scale(0.98); }
 
-    .tick { stroke: var(--muted); }
-    .tick-major { stroke: var(--text); }
-    .clock-numeral { fill: var(--muted); font-size: 14px; font-weight: 500; opacity: 0.4; }
-
-    #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
-    #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
-    #center-dot { fill: var(--accent); }
-    #bezel { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.2; }
-
-    .bus-dot-77 { fill: var(--r77); filter: drop-shadow(0 0 4px var(--r77)); }
-    .bus-dot-99 { fill: none; stroke: var(--r99); stroke-width: 2.5; filter: drop-shadow(0 0 4px var(--r99)); }
-    .bus-dot.imminent { animation: pulse 1.5s ease-in-out infinite; }
-    .bus-dot.scheduled { opacity: 0.45; }
-    .bus-dot.unreachable { opacity: 0.25; filter: none; }
-
-    @keyframes pulse {
-      0%, 100% { r: 5; opacity: 1; }
-      50% { r: 8; opacity: 0.7; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      .bus-dot.imminent { animation: none; }
-    }
-
-    #countdown {
-      text-align: center;
-      padding: 8px 0 0;
-      min-height: 60px;
+    #route-label {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: clamp(20px, 5vw, 28px);
+      font-weight: 700;
+      opacity: 0.6;
       font-variant-numeric: tabular-nums;
     }
 
-    #countdown.empty {
-      font-size: 15px;
-      font-weight: 500;
-      color: var(--muted);
-      padding-top: 20px;
+    #hero {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      letter-spacing: -0.03em;
+      transition: color 0.3s ease, font-size 0.5s cubic-bezier(0.22, 1, 0.36, 1),
+                  font-weight 0.3s ease, text-shadow 0.5s ease;
     }
 
-    .countdown-next { font-size: 36px; font-weight: 700; }
-    .countdown-after { font-size: 20px; font-weight: 500; opacity: 0.7; margin-top: 2px; }
+    #status {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-top: 4px;
+      transition: color 0.3s ease 0.1s, letter-spacing 0.5s ease 0.1s;
+    }
 
+    /* --- Urgency states --- */
+
+    [data-urgency="green"] #hero {
+      color: var(--urgency-green);
+      font-size: clamp(80px, 25vw, 140px);
+      font-weight: 700;
+      animation: breathe 4s ease-in-out infinite;
+    }
+    [data-urgency="green"] #status {
+      color: var(--urgency-green);
+      font-size: clamp(20px, 6vw, 32px);
+      letter-spacing: 0.2em;
+    }
+
+    [data-urgency="amber"] #hero {
+      color: var(--urgency-amber);
+      font-size: clamp(88px, 28vw, 152px);
+      font-weight: 800;
+    }
+    [data-urgency="amber"] #status {
+      color: var(--urgency-amber);
+      font-size: clamp(20px, 6vw, 32px);
+      letter-spacing: 0.1em;
+    }
+
+    [data-urgency="red"] #hero {
+      color: var(--urgency-red);
+      font-size: clamp(96px, 32vw, 168px);
+      font-weight: 800;
+      animation: alarm-glow 1.2s ease-in-out infinite;
+    }
+    [data-urgency="red"] #status {
+      color: var(--urgency-red);
+      font-size: clamp(20px, 6vw, 32px);
+      letter-spacing: 0.05em;
+    }
+
+    [data-urgency="none"] #hero {
+      color: var(--muted);
+      font-size: clamp(80px, 25vw, 140px);
+      font-weight: 700;
+    }
+    [data-urgency="none"] #status {
+      color: var(--muted);
+      font-size: clamp(20px, 6vw, 32px);
+      letter-spacing: 0.15em;
+    }
+
+    @keyframes breathe {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
+
+    @keyframes alarm-glow {
+      0%, 100% { text-shadow: 0 0 20px color-mix(in srgb, var(--urgency-red) 30%, transparent); }
+      50% { text-shadow: 0 0 60px color-mix(in srgb, var(--urgency-red) 60%, transparent); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      [data-urgency="green"] #hero,
+      [data-urgency="red"] #hero { animation: none; }
+    }
+
+    /* --- Then list --- */
+
+    #then-list {
+      margin-top: clamp(24px, 5vh, 40px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+    .then-item {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: clamp(14px, 3.5vw, 17px);
+      font-weight: 400;
+      font-variant-numeric: tabular-nums;
+      opacity: 0.5;
+      letter-spacing: 0.05em;
+    }
+    .then-item:first-child { opacity: 0.7; font-weight: 500; }
+
+    /* --- Updated timestamp --- */
+
+    #updated {
+      margin-top: clamp(16px, 3vh, 32px);
+      font-size: 12px;
+      color: var(--muted);
+      opacity: 0.5;
+    }
+
+    /* --- Stale data dim --- */
     body.stale-data main { opacity: 0.5; transition: opacity 0.3s; }
 
-    footer {
-      padding: 8px 20px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      gap: 12px;
+    /* --- Accessibility --- */
+    @media (forced-colors: active) {
+      [data-urgency="red"] #hero,
+      [data-urgency="red"] #status { forced-color-adjust: none; outline: 2px solid Highlight; }
     }
-    #updated { font-size: 13px; color: var(--muted); flex: 1; }
-    #refresh-btn {
-      background: var(--surface);
-      color: var(--accent);
-      border: none;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      font-size: 18px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #refresh-btn:active { opacity: 0.7; }
-    #toggle-btn {
-      background: var(--surface);
-      color: var(--accent);
-      border: none;
-      padding: 12px 20px;
-      min-height: 44px;
-      border-radius: 10px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    #toggle-btn:active { opacity: 0.7; }
   </style>
 </head>
 <body>
   <header>
-    <div id="trip-label">Loading&hellip; <span id="stale-badge">cached</span></div>
-    <div id="trip-sublabel"></div>
+    <div id="trip-label">To Kornhill</div>
+    <div id="trip-sublabel">from Tai Hong House</div>
   </header>
 
-  <main>
-    <svg id="clock" viewBox="0 0 300 300" role="img" aria-label="Analog clock showing bus arrival times">
-      <circle id="bezel" cx="150" cy="150" r="143" />
-      <g id="ticks"></g>
-      <text x="150" y="38" text-anchor="middle" dominant-baseline="central" class="clock-numeral">12</text>
-      <text x="262" y="150" text-anchor="middle" dominant-baseline="central" class="clock-numeral">3</text>
-      <text x="150" y="262" text-anchor="middle" dominant-baseline="central" class="clock-numeral">6</text>
-      <text x="38" y="150" text-anchor="middle" dominant-baseline="central" class="clock-numeral">9</text>
-      <g id="bus-markers"></g>
-      <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />
-      <line id="hand-min"  x1="150" y1="155" x2="150" y2="40" />
-      <circle id="center-dot" cx="150" cy="150" r="4" />
-    </svg>
-    <div id="countdown" aria-live="polite">--</div>
+  <main id="main-tap">
+    <div id="route-label">--</div>
+    <div id="hero">--</div>
+    <div id="status" role="status" aria-live="polite">--</div>
+    <div id="then-list"></div>
+    <div id="updated"></div>
   </main>
-
-  <footer>
-    <span id="updated"></span>
-    <button id="refresh-btn" aria-label="Refresh">&#x21bb;</button>
-    <button id="toggle-btn">Switch trip</button>
-  </footer>
 
   <script src="/app.js"></script>
 </body>
