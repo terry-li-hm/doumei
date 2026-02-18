@@ -101,6 +101,7 @@
 
     .tick { stroke: var(--muted); }
     .tick-major { stroke: var(--text); }
+    .clock-numeral { fill: var(--muted); font-size: 14px; font-weight: 500; opacity: 0.4; }
 
     #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
     #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
@@ -111,6 +112,7 @@
     .bus-dot-99 { fill: none; stroke: var(--r99); stroke-width: 2.5; filter: drop-shadow(0 0 4px var(--r99)); }
     .bus-dot.imminent { animation: pulse 1.5s ease-in-out infinite; }
     .bus-dot.scheduled { opacity: 0.45; }
+    .bus-dot.unreachable { opacity: 0.25; filter: none; }
 
     @keyframes pulse {
       0%, 100% { r: 5; opacity: 1; }
@@ -185,6 +187,10 @@
     <svg id="clock" viewBox="0 0 300 300" role="img" aria-label="Analog clock showing bus arrival times">
       <circle id="bezel" cx="150" cy="150" r="143" />
       <g id="ticks"></g>
+      <text x="150" y="38" text-anchor="middle" dominant-baseline="central" class="clock-numeral">12</text>
+      <text x="262" y="150" text-anchor="middle" dominant-baseline="central" class="clock-numeral">3</text>
+      <text x="150" y="262" text-anchor="middle" dominant-baseline="central" class="clock-numeral">6</text>
+      <text x="38" y="150" text-anchor="middle" dominant-baseline="central" class="clock-numeral">9</text>
       <g id="bus-markers"></g>
       <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />
       <line id="hand-min"  x1="150" y1="155" x2="150" y2="40" />

@@ -11,6 +11,7 @@ const CX = 150, CY = 150;
 const R_FACE = 143;
 const R_DOT = 130;
 const DOT_R = 5;
+const WALK_MIN = 3;
 const NS = 'http://www.w3.org/2000/svg';
 
 /* --- State --- */
@@ -135,8 +136,9 @@ function drawArcs() {
     dot.setAttribute('cy', pos.y);
     dot.setAttribute('r', DOT_R);
     let cls = e.route === '99' ? 'bus-dot bus-dot-99' : 'bus-dot bus-dot-77';
-    if (e.scheduled) cls += ' scheduled';
-    if (i === 0 && mins < 2) cls += ' imminent';
+    if (mins <= WALK_MIN) cls += ' unreachable';
+    else if (e.scheduled) cls += ' scheduled';
+    if (i === 0 && mins < 2 && mins > WALK_MIN) cls += ' imminent';
     dot.setAttribute('class', cls);
     g.appendChild(dot);
   }
@@ -155,6 +157,15 @@ function routeColor(route) {
 
 function updateCountdown() {
   const el = document.getElementById('countdown');
+
+  // Stale data: replace countdown with explicit message
+  if (lastFetchTime && Date.now() - lastFetchTime > 60000) {
+    document.body.classList.add('stale-data');
+    el.innerHTML = '<div class="countdown-next" style="color:var(--muted)">Stale · tap to refresh</div>';
+    el.classList.remove('empty');
+    return;
+  }
+
   const active = currentETAs.filter(e => minutesUntil(e.eta) > 0);
 
   if (active.length === 0) {
@@ -222,7 +233,7 @@ function stopAnim()     { if (animFrame) { cancelAnimationFrame(animFrame); anim
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopPolling(); stopAnim(); }
   else {
-    if (lastFetchTime && Date.now() - lastFetchTime > 45000) {
+    if (lastFetchTime && Date.now() - lastFetchTime > 60000) {
       document.body.classList.add('stale-data');
     }
     startPolling(); startAnim();
