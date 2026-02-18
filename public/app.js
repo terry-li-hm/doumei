@@ -37,34 +37,38 @@ function renderETAs(data, stale) {
     return;
   }
 
-  let html = '';
+  // Flatten all ETAs from all routes into a single timeline
+  const allETAs = [];
   for (const routeData of data.data) {
-    const route = routeData.route;
-    const etas = (routeData.data || [])
-      .filter((e) => e.eta && minutesUntil(e.eta) > 0 && minutesUntil(e.eta) <= MAX_MINUTES)
-      .sort((a, b) => new Date(a.eta) - new Date(b.eta));
-
-    html += `<div class="route-row">`;
-    html += `<span class="route-num">${route}</span>`;
-
-    if (etas.length === 0) {
-      html += `<span class="no-bus">No bus within ${MAX_MINUTES} min</span>`;
-    } else {
-      html += `<span class="times">`;
-      html += etas
-        .map((e) => {
-          const mins = Math.round(minutesUntil(e.eta));
-          const isScheduled = (e.rmk_en || '').toLowerCase().includes('scheduled');
-          const cls = isScheduled ? 'time scheduled' : 'time live';
-          return `<span class="${cls}">${formatTime(e.eta)}<small>${mins}m</small></span>`;
-        })
-        .join('');
-      html += `</span>`;
+    for (const e of routeData.data || []) {
+      if (e.eta && minutesUntil(e.eta) > 0 && minutesUntil(e.eta) <= MAX_MINUTES) {
+        allETAs.push({ ...e, route: routeData.route });
+      }
     }
-    html += `</div>`;
+  }
+  allETAs.sort((a, b) => new Date(a.eta) - new Date(b.eta));
+
+  if (allETAs.length === 0) {
+    container.innerHTML = `<div class="empty">No bus within ${MAX_MINUTES} min</div>`;
+    return;
   }
 
-  container.innerHTML = html || '<div class="empty">No upcoming buses</div>';
+  const html = allETAs
+    .map((e, i) => {
+      const mins = Math.round(minutesUntil(e.eta));
+      const isScheduled = (e.rmk_en || '').toLowerCase().includes('scheduled');
+      const cls = isScheduled ? 'scheduled' : 'live';
+      const first = i === 0 ? ' first' : '';
+      return `<div class="eta-row${first}">
+        <span class="eta-time">${formatTime(e.eta)}</span>
+        <span class="eta-mins">${mins}m</span>
+        <span class="route-badge route-${e.route}">${e.route}</span>
+        <span class="eta-status ${cls}">${isScheduled ? 'scheduled' : ''}</span>
+      </div>`;
+    })
+    .join('');
+
+  container.innerHTML = html;
 
   const now = new Date();
   const timeStr = now.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });

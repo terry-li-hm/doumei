@@ -86,51 +86,70 @@
       padding: 8px 20px;
     }
 
-    .route-row {
+    .eta-row {
       background: var(--surface);
       border-radius: var(--radius);
-      padding: 16px;
-      margin-bottom: 12px;
+      padding: 14px 16px;
+      margin-bottom: 8px;
       display: flex;
       align-items: center;
-      gap: 16px;
-    }
-
-    .route-num {
-      font-size: 28px;
-      font-weight: 800;
-      color: var(--accent);
-      min-width: 48px;
-    }
-
-    .times {
-      display: flex;
       gap: 12px;
-      flex-wrap: wrap;
     }
 
-    .time {
+    .eta-row.first {
+      padding: 18px 16px;
+      margin-bottom: 12px;
+    }
+
+    .eta-row.first .eta-time {
+      font-size: 32px;
+    }
+
+    .eta-row.first .eta-mins {
+      font-size: 16px;
+    }
+
+    .eta-time {
       font-size: 22px;
-      font-weight: 600;
-      display: flex;
-      align-items: baseline;
-      gap: 4px;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      min-width: 60px;
     }
 
-    .time small {
-      font-size: 13px;
-      font-weight: 400;
-      color: var(--muted);
-    }
-
-    .time.live { color: var(--live); }
-    .time.live::before { content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-right: 4px; flex-shrink: 0; align-self: center; }
-
-    .time.scheduled { color: var(--scheduled); }
-
-    .no-bus {
-      color: var(--muted);
+    .eta-mins {
       font-size: 14px;
+      color: var(--muted);
+      min-width: 32px;
+    }
+
+    .route-badge {
+      font-size: 14px;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .route-77 { background: #38bdf8; }
+    .route-99 { background: #a78bfa; }
+
+    .eta-status {
+      font-size: 12px;
+      margin-left: auto;
+    }
+
+    .eta-status.live::before {
+      content: '';
+      display: inline-block;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--live);
+    }
+
+    .eta-status.scheduled {
+      color: var(--scheduled);
     }
 
     .empty {
