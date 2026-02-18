@@ -9,8 +9,8 @@ const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
 const CX = 150, CY = 150;
 const R_FACE = 143;
-const R_OUTER = 135; // Route 77 arcs
-const R_INNER = 122; // Route 99 arcs
+const R_OUTER = 135;  // Route 77 arcs
+const R_INNER = 122;  // Route 99 arcs
 const ARC_SPAN = 6;   // degrees per bus marker
 const R_LBL_OUT = 147; // label radius outside outer arcs
 const R_LBL_IN = 108;  // label radius inside inner arcs
@@ -90,7 +90,7 @@ function tickClock() {
     lastCountdownSec = sec;
     currentETAs = currentETAs.filter(e => minutesUntil(e.eta) > 0);
     drawArcs();
-    updateCenter();
+    updateCountdown();
   }
 
   animFrame = requestAnimationFrame(tickClock);
@@ -100,8 +100,9 @@ function tickClock() {
 
 function renderBusArcs(data, stale) {
   const trip = TRIPS[currentTrip];
-  document.getElementById('trip-line').innerHTML =
-    `${trip.label} <span class="trip-sub">\u2014 ${trip.sublabel}</span> <span id="stale-badge">cached</span>`;
+  document.getElementById('trip-label').innerHTML =
+    `${trip.label} <span id="stale-badge">cached</span>`;
+  document.getElementById('trip-sublabel').textContent = trip.sublabel;
 
   currentETAs = [];
   if (data?.data) {
@@ -123,7 +124,7 @@ function renderBusArcs(data, stale) {
 
   dataLoaded = true;
   drawArcs();
-  updateCenter();
+  updateCountdown();
 
   const timeStr = new Date().toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
   document.getElementById('updated').textContent = stale ? 'Cached \u00B7 updating\u2026' : `Updated ${timeStr}`;
@@ -142,11 +143,9 @@ function drawArcs() {
     const half = ARC_SPAN / 2;
     const r = e.route === '77' ? R_OUTER : R_INNER;
     const grp = e.route === '77' ? outer : inner;
-    const color = e.route === '77' ? 'var(--r77)' : 'var(--r99)';
 
     const path = document.createElementNS(NS, 'path');
     path.setAttribute('d', arcPath(r, deg - half, deg + half));
-    path.setAttribute('stroke', color);
     path.setAttribute('class', 'bus-arc' + (e.scheduled ? ' bus-arc-scheduled' : ''));
     grp.appendChild(path);
 
@@ -159,28 +158,26 @@ function drawArcs() {
     txt.setAttribute('y', pos.y);
     txt.setAttribute('text-anchor', 'middle');
     txt.setAttribute('dominant-baseline', 'central');
-    txt.setAttribute('fill', color);
     txt.setAttribute('class', 'arc-label' + (e.scheduled ? ' bus-arc-scheduled' : ''));
     txt.textContent = mins < 1 ? '<1' : `${Math.floor(mins)}m`;
     grp.appendChild(txt);
   }
 }
 
-/* --- Center readout --- */
+/* --- Countdown below clock --- */
 
-function updateCenter() {
-  const mEl = document.getElementById('center-mins');
-  const sEl = document.getElementById('center-sub');
+function updateCountdown() {
+  const el = document.getElementById('countdown');
 
   const next = currentETAs.find(e => minutesUntil(e.eta) > 0);
   if (!next) {
-    mEl.textContent = '--';
-    sEl.textContent = dataLoaded ? 'no bus within 20 min' : '';
+    el.textContent = dataLoaded ? 'No bus within 20 min' : '--';
+    el.classList.toggle('empty', dataLoaded);
     return;
   }
+  el.classList.remove('empty');
   const mins = minutesUntil(next.eta);
-  mEl.textContent = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
-  sEl.textContent = '';
+  el.textContent = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
 }
 
 /* --- Data fetching --- */
@@ -214,6 +211,11 @@ function switchTrip() {
   fetchETAs();
 }
 
+function doRefresh() {
+  document.getElementById('updated').textContent = 'Refreshing\u2026';
+  fetchETAs();
+}
+
 /* --- Lifecycle --- */
 
 function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 15000); }
@@ -232,10 +234,8 @@ window.addEventListener('pageshow', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggle-btn').addEventListener('click', switchTrip);
-  document.getElementById('clock-area').addEventListener('click', () => {
-    document.getElementById('updated').textContent = 'Refreshing\u2026';
-    fetchETAs();
-  });
+  document.getElementById('refresh-btn').addEventListener('click', doRefresh);
+  document.getElementById('clock').addEventListener('click', doRefresh);
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
