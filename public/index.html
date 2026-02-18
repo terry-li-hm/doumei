@@ -87,7 +87,7 @@
     }
 
     #clock {
-      width: min(80vw, 320px);
+      width: min(85vw, 360px);
       height: auto;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
@@ -103,7 +103,13 @@
     #center-dot { fill: var(--accent); }
 
     .bus-dot { fill: var(--accent); }
+    .bus-dot.imminent { animation: pulse 1.5s ease-in-out infinite; }
     .scheduled { opacity: 0.45; }
+
+    @keyframes pulse {
+      0%, 100% { r: 5; opacity: 1; }
+      50% { r: 8; opacity: 0.7; }
+    }
 
     #countdown {
       font-size: 36px;

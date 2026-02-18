@@ -1,8 +1,8 @@
 /* --- Constants --- */
 
 const TRIPS = {
-  kornhill: { stop: '001313', label: 'To Kornhill', sublabel: 'from Tai Hong House' },
-  grandprom: { stop: '001359', label: 'To Grand Promenade', sublabel: 'from Yiu Wah House' },
+  kornhill: { stop: '001313', label: 'To Kornhill', sublabel: 'from Tai Hong House', toggle: '→ Grand Prom' },
+  grandprom: { stop: '001359', label: 'To Grand Promenade', sublabel: 'from Yiu Wah House', toggle: '→ Kornhill' },
 };
 
 const CACHE_KEY = 'bus_eta_cache';
@@ -85,6 +85,7 @@ function renderBusArcs(data, stale) {
   document.getElementById('trip-label').innerHTML =
     `${trip.label} <span id="stale-badge">cached</span>`;
   document.getElementById('trip-sublabel').textContent = trip.sublabel;
+  document.getElementById('toggle-btn').textContent = trip.toggle;
 
   currentETAs = [];
   if (data?.data) {
@@ -117,15 +118,20 @@ function drawArcs() {
   const g = document.getElementById('bus-markers');
   g.replaceChildren();
 
-  for (const e of currentETAs) {
+  for (let i = 0; i < currentETAs.length; i++) {
+    const e = currentETAs[i];
     const t = new Date(e.eta);
+    const mins = minutesUntil(e.eta);
     const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
     const pos = polar(R_DOT, deg);
     const dot = document.createElementNS(NS, 'circle');
     dot.setAttribute('cx', pos.x);
     dot.setAttribute('cy', pos.y);
     dot.setAttribute('r', DOT_R);
-    dot.setAttribute('class', 'bus-dot' + (e.scheduled ? ' scheduled' : ''));
+    let cls = 'bus-dot';
+    if (e.scheduled) cls += ' scheduled';
+    if (i === 0 && mins < 2) cls += ' imminent';
+    dot.setAttribute('class', cls);
     g.appendChild(dot);
   }
 }
