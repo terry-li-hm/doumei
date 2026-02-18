@@ -20,6 +20,7 @@ let refreshTimer = null;
 let animFrame = null;
 let currentETAs = [];
 let lastCountdownSec = -1;
+let lastFetchTime = 0;
 let dataLoaded = false;
 
 /* --- Geometry --- */
@@ -123,12 +124,17 @@ function drawArcs() {
     const t = new Date(e.eta);
     const mins = minutesUntil(e.eta);
     const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
-    const pos = polar(R_DOT, deg);
+    // Offset inward if within 90s of previous ETA (collision avoidance)
+    let r = R_DOT;
+    if (i > 0 && Math.abs(new Date(e.eta) - new Date(currentETAs[i - 1].eta)) < 90000) {
+      r = R_DOT - 12;
+    }
+    const pos = polar(r, deg);
     const dot = document.createElementNS(NS, 'circle');
     dot.setAttribute('cx', pos.x);
     dot.setAttribute('cy', pos.y);
     dot.setAttribute('r', DOT_R);
-    let cls = 'bus-dot';
+    let cls = e.route === '99' ? 'bus-dot bus-dot-99' : 'bus-dot bus-dot-77';
     if (e.scheduled) cls += ' scheduled';
     if (i === 0 && mins < 2) cls += ' imminent';
     dot.setAttribute('class', cls);
@@ -138,18 +144,34 @@ function drawArcs() {
 
 /* --- Countdown below clock --- */
 
+function fmtMins(eta) {
+  const m = minutesUntil(eta);
+  return m < 1 ? '<1m' : `${Math.floor(m)}m`;
+}
+
+function routeColor(route) {
+  return route === '99' ? 'var(--r99)' : 'var(--r77)';
+}
+
 function updateCountdown() {
   const el = document.getElementById('countdown');
+  const active = currentETAs.filter(e => minutesUntil(e.eta) > 0);
 
-  const next = currentETAs.find(e => minutesUntil(e.eta) > 0);
-  if (!next) {
-    el.textContent = dataLoaded ? 'No bus within 20 min' : '--';
+  if (active.length === 0) {
+    el.innerHTML = dataLoaded ? 'No buses within 20 min' : '--';
     el.classList.toggle('empty', dataLoaded);
     return;
   }
   el.classList.remove('empty');
-  const mins = minutesUntil(next.eta);
-  el.textContent = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
+
+  const next = active[0];
+  let html = `<div class="countdown-next" style="color:${routeColor(next.route)}">${next.route} · ${fmtMins(next.eta)}</div>`;
+
+  if (active.length > 1) {
+    const after = active[1];
+    html += `<div class="countdown-after" style="color:${routeColor(after.route)}">${after.route} · ${fmtMins(after.eta)}</div>`;
+  }
+  el.innerHTML = html;
 }
 
 /* --- Data fetching --- */
@@ -161,6 +183,8 @@ async function fetchETAs() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     localStorage.setItem(CACHE_KEY, JSON.stringify({ trip: currentTrip, data }));
+    lastFetchTime = Date.now();
+    document.body.classList.remove('stale-data');
     renderBusArcs(data, false);
   } catch (err) {
     console.error('Fetch error:', err);
@@ -197,7 +221,12 @@ function stopAnim()     { if (animFrame) { cancelAnimationFrame(animFrame); anim
 
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) { stopPolling(); stopAnim(); }
-  else { startPolling(); startAnim(); }
+  else {
+    if (lastFetchTime && Date.now() - lastFetchTime > 45000) {
+      document.body.classList.add('stale-data');
+    }
+    startPolling(); startAnim();
+  }
 });
 
 window.addEventListener('pageshow', (e) => {

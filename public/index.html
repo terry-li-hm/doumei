@@ -22,6 +22,8 @@
       --text: #f1f5f9;
       --muted: #94a3b8;
       --accent: #38bdf8;
+      --r77: #38bdf8;
+      --r99: #a78bfa;
       --scheduled: #f59e0b;
       --hand-hour: #64748b;
       --hand-min: #f1f5f9;
@@ -34,6 +36,8 @@
         --text: #0f172a;
         --muted: #64748b;
         --accent: #0284c7;
+        --r77: #0284c7;
+        --r99: #7c3aed;
         --scheduled: #d97706;
         --hand-hour: #94a3b8;
         --hand-min: #0f172a;
@@ -103,9 +107,10 @@
     #center-dot { fill: var(--accent); }
     #bezel { fill: none; stroke: var(--muted); stroke-width: 1; opacity: 0.2; }
 
-    .bus-dot { fill: var(--accent); filter: drop-shadow(0 0 4px var(--accent)); }
+    .bus-dot-77 { fill: var(--r77); filter: drop-shadow(0 0 4px var(--r77)); }
+    .bus-dot-99 { fill: none; stroke: var(--r99); stroke-width: 2; filter: drop-shadow(0 0 4px var(--r99)); }
     .bus-dot.imminent { animation: pulse 1.5s ease-in-out infinite; }
-    .scheduled { opacity: 0.45; }
+    .bus-dot.scheduled { opacity: 0.45; }
 
     @keyframes pulse {
       0%, 100% { r: 5; opacity: 1; }
@@ -113,12 +118,10 @@
     }
 
     #countdown {
-      font-size: 36px;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
       text-align: center;
       padding: 8px 0 0;
-      min-height: 52px;
+      min-height: 60px;
+      font-variant-numeric: tabular-nums;
     }
 
     #countdown.empty {
@@ -127,6 +130,11 @@
       color: var(--muted);
       padding-top: 20px;
     }
+
+    .countdown-next { font-size: 36px; font-weight: 700; }
+    .countdown-after { font-size: 20px; font-weight: 500; opacity: 0.7; margin-top: 2px; }
+
+    body.stale-data main { opacity: 0.5; transition: opacity 0.3s; }
 
     footer {
       padding: 8px 20px 20px;
