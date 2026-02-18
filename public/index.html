@@ -96,6 +96,7 @@
     #clock {
       width: min(80vw, 320px);
       height: auto;
+      overflow: visible;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     }
 
@@ -110,39 +111,23 @@
     .bus-arc { fill: none; stroke-width: 8; stroke-linecap: round; }
     .bus-arc-scheduled { opacity: 0.45; }
 
+    .arc-label {
+      font-size: 11px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
+    }
+
     #center-mins {
       fill: var(--text);
       font-size: 42px;
       font-weight: 700;
       font-variant-numeric: tabular-nums;
     }
-    #center-route {
+    #center-sub {
       fill: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
-      text-transform: uppercase;
+      font-size: 12px;
+      font-weight: 500;
     }
-
-    #legend {
-      display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
-      gap: 14px;
-      padding: 16px 0 0;
-      font-size: 13px;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      color: var(--muted);
-      min-height: 32px;
-      align-items: center;
-    }
-    .legend-item { display: flex; align-items: center; gap: 5px; }
-    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
-    .legend-dot-77 { background: var(--r77); }
-    .legend-dot-99 { background: var(--r99); }
-    .legend-primary { color: var(--text); font-size: 15px; }
-    .legend-scheduled { opacity: 0.6; }
-    .empty-legend { font-weight: 500; }
 
     footer {
       padding: 8px 20px 20px;
@@ -181,11 +166,8 @@
       <line id="hand-min"  x1="150" y1="155" x2="150" y2="40" />
       <circle id="center-dot" cx="150" cy="150" r="4" />
       <text id="center-mins" x="150" y="195" text-anchor="middle">--</text>
-      <text id="center-route" x="150" y="213" text-anchor="middle"></text>
+      <text id="center-sub" x="150" y="213" text-anchor="middle" aria-live="polite"></text>
     </svg>
-    <div id="legend" aria-live="polite">
-      <span class="empty-legend">Loading&hellip;</span>
-    </div>
   </main>
 
   <footer>

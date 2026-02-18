@@ -11,7 +11,9 @@ const CX = 150, CY = 150;
 const R_FACE = 143;
 const R_OUTER = 135; // Route 77 arcs
 const R_INNER = 122; // Route 99 arcs
-const ARC_SPAN = 6;  // degrees per bus marker
+const ARC_SPAN = 6;   // degrees per bus marker
+const R_LBL_OUT = 149; // label radius outside outer arcs
+const R_LBL_IN = 108;  // label radius inside inner arcs
 const NS = 'http://www.w3.org/2000/svg';
 
 /* --- State --- */
@@ -82,13 +84,13 @@ function tickClock() {
   // Sweep wedge: 20-min (120 deg) window from minute hand
   document.getElementById('sweep-wedge').setAttribute('d', wedgePath(R_FACE, minDeg, minDeg + 120));
 
-  // Update text once per second
+  // Update arcs + text once per second
   const sec = Math.floor(now.getTime() / 1000);
   if (sec !== lastCountdownSec) {
     lastCountdownSec = sec;
-    pruneExpired();
+    currentETAs = currentETAs.filter(e => minutesUntil(e.eta) > 0);
+    drawArcs();
     updateCenter();
-    updateLegend();
   }
 
   animFrame = requestAnimationFrame(tickClock);
@@ -122,7 +124,6 @@ function renderBusArcs(data, stale) {
   dataLoaded = true;
   drawArcs();
   updateCenter();
-  updateLegend();
 
   const timeStr = new Date().toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
   document.getElementById('updated').textContent = stale ? 'Cached \u00B7 updating\u2026' : `Updated ${timeStr}`;
@@ -148,50 +149,38 @@ function drawArcs() {
     path.setAttribute('stroke', color);
     path.setAttribute('class', 'bus-arc' + (e.scheduled ? ' bus-arc-scheduled' : ''));
     grp.appendChild(path);
-  }
-}
 
-function pruneExpired() {
-  const before = currentETAs.length;
-  currentETAs = currentETAs.filter(e => minutesUntil(e.eta) > 0);
-  if (currentETAs.length !== before) drawArcs();
+    // Minute label next to arc
+    const mins = minutesUntil(e.eta);
+    const labelR = e.route === '77' ? R_LBL_OUT : R_LBL_IN;
+    const pos = polar(labelR, deg);
+    const txt = document.createElementNS(NS, 'text');
+    txt.setAttribute('x', pos.x);
+    txt.setAttribute('y', pos.y);
+    txt.setAttribute('text-anchor', 'middle');
+    txt.setAttribute('dominant-baseline', 'central');
+    txt.setAttribute('fill', color);
+    txt.setAttribute('class', 'arc-label' + (e.scheduled ? ' bus-arc-scheduled' : ''));
+    txt.textContent = mins < 1 ? '<1' : `${Math.floor(mins)}m`;
+    grp.appendChild(txt);
+  }
 }
 
 /* --- Center readout --- */
 
 function updateCenter() {
   const mEl = document.getElementById('center-mins');
-  const rEl = document.getElementById('center-route');
+  const sEl = document.getElementById('center-sub');
 
   const next = currentETAs.find(e => minutesUntil(e.eta) > 0);
   if (!next) {
     mEl.textContent = '--';
-    rEl.textContent = dataLoaded ? 'no bus' : '';
+    sEl.textContent = dataLoaded ? 'no bus within 20 min' : '';
     return;
   }
   const mins = minutesUntil(next.eta);
   mEl.textContent = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
-  rEl.textContent = `Route ${next.route}`;
-}
-
-/* --- Legend strip --- */
-
-function updateLegend() {
-  const el = document.getElementById('legend');
-  if (!dataLoaded) return;
-
-  const valid = currentETAs.filter(e => minutesUntil(e.eta) > 0);
-  if (!valid.length) {
-    el.innerHTML = `<span class="empty-legend">No bus within ${MAX_MINUTES} min</span>`;
-    return;
-  }
-  el.innerHTML = valid.map((e, i) => {
-    const m = minutesUntil(e.eta);
-    const t = m < 1 ? '<1m' : `${Math.floor(m)}m`;
-    const sc = e.scheduled ? ' legend-scheduled' : '';
-    const primary = i === 0 ? ' legend-primary' : '';
-    return `<span class="legend-item${sc}${primary}"><span class="legend-dot legend-dot-${e.route}"></span>${e.route} ${t}</span>`;
-  }).join('');
+  sEl.textContent = '';
 }
 
 /* --- Data fetching --- */
@@ -227,7 +216,7 @@ function switchTrip() {
 
 /* --- Lifecycle --- */
 
-function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 30000); }
+function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 10000); }
 function stopPolling()  { clearInterval(refreshTimer); refreshTimer = null; }
 function startAnim()    { if (!animFrame) tickClock(); }
 function stopAnim()     { if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } }
