@@ -22,7 +22,6 @@
       --scheduled: #f59e0b;
       --hand-hour: #64748b;
       --hand-min: #f1f5f9;
-      --sweep: rgba(56, 189, 248, 0.12);
     }
 
     @media (prefers-color-scheme: light) {
@@ -35,7 +34,6 @@
         --scheduled: #d97706;
         --hand-hour: #94a3b8;
         --hand-min: #0f172a;
-        --sweep: rgba(2, 132, 199, 0.10);
       }
     }
 
@@ -88,7 +86,7 @@
     #clock {
       width: min(80vw, 320px);
       height: auto;
-      overflow: visible;
+      overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
@@ -100,17 +98,9 @@
     #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
     #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
     #center-dot { fill: var(--accent); }
-    #sweep-wedge { fill: var(--sweep); }
 
     .bus-dot { fill: var(--accent); }
     .scheduled { opacity: 0.45; }
-
-    .dot-label {
-      font-size: 12px;
-      font-weight: 600;
-      font-variant-numeric: tabular-nums;
-      fill: var(--accent);
-    }
 
     #countdown {
       font-size: 36px;
@@ -171,7 +161,6 @@
 
   <main>
     <svg id="clock" viewBox="0 0 300 300" role="img" aria-label="Analog clock showing bus arrival times">
-      <path id="sweep-wedge" />
       <g id="ticks"></g>
       <g id="bus-markers"></g>
       <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />

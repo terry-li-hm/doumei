@@ -9,11 +9,8 @@ const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
 const CX = 150, CY = 150;
 const R_FACE = 143;
-const R_DOT_OUT = 133;  // outer ring dots
-const R_DOT_IN = 120;   // inner ring dots
+const R_DOT = 130;
 const DOT_R = 5;
-const R_LBL_OUT = 147;  // label outside outer ring
-const R_LBL_IN = 106;   // label inside inner ring
 const NS = 'http://www.w3.org/2000/svg';
 
 /* --- State --- */
@@ -30,12 +27,6 @@ let dataLoaded = false;
 function polar(r, deg) {
   const rad = (deg - 90) * Math.PI / 180;
   return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
-}
-
-function wedgePath(r, start, end) {
-  const p1 = polar(r, start), p2 = polar(r, end);
-  const large = (end - start) > 180 ? 1 : 0;
-  return `M${CX},${CY} L${p1.x},${p1.y} A${r},${r} 0 ${large} 1 ${p2.x},${p2.y} Z`;
 }
 
 function minToAngle(m) { return (m / 60) * 360; }
@@ -75,10 +66,7 @@ function tickClock() {
   document.getElementById('hand-hour').setAttribute('transform', `rotate(${hourDeg} ${CX} ${CY})`);
   document.getElementById('hand-min').setAttribute('transform',  `rotate(${minDeg} ${CX} ${CY})`);
 
-  // Sweep wedge: 20-min (120 deg) window from minute hand
-  document.getElementById('sweep-wedge').setAttribute('d', wedgePath(R_FACE, minDeg, minDeg + 120));
-
-  // Update arcs + text once per second
+  // Update dots + countdown once per second
   const sec = Math.floor(now.getTime() / 1000);
   if (sec !== lastCountdownSec) {
     lastCountdownSec = sec;
@@ -129,33 +117,16 @@ function drawArcs() {
   const g = document.getElementById('bus-markers');
   g.replaceChildren();
 
-  for (let i = 0; i < currentETAs.length; i++) {
-    const e = currentETAs[i];
+  for (const e of currentETAs) {
     const t = new Date(e.eta);
     const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
-    const isOuter = i % 2 === 0; // alternate rings
-    const sc = e.scheduled ? ' scheduled' : '';
-
-    // Dot
-    const pos = polar(isOuter ? R_DOT_OUT : R_DOT_IN, deg);
+    const pos = polar(R_DOT, deg);
     const dot = document.createElementNS(NS, 'circle');
     dot.setAttribute('cx', pos.x);
     dot.setAttribute('cy', pos.y);
     dot.setAttribute('r', DOT_R);
-    dot.setAttribute('class', 'bus-dot' + sc);
+    dot.setAttribute('class', 'bus-dot' + (e.scheduled ? ' scheduled' : ''));
     g.appendChild(dot);
-
-    // Label
-    const mins = minutesUntil(e.eta);
-    const lpos = polar(isOuter ? R_LBL_OUT : R_LBL_IN, deg);
-    const txt = document.createElementNS(NS, 'text');
-    txt.setAttribute('x', lpos.x);
-    txt.setAttribute('y', lpos.y);
-    txt.setAttribute('text-anchor', 'middle');
-    txt.setAttribute('dominant-baseline', 'central');
-    txt.setAttribute('class', 'dot-label' + sc);
-    txt.textContent = mins < 1 ? '<1' : `${Math.floor(mins)}m`;
-    g.appendChild(txt);
   }
 }
 
