@@ -29,12 +29,11 @@ def draw_icon(size):
     pad = s * 0.12
     face_r = (s - 2 * pad) / 2
 
-    # 12 major tick marks
-    for i in range(12):
-        deg = (i / 12) * 360
-        x1, y1 = polar(cx, cy, face_r * 0.83, deg)
+    # 4 cardinal tick marks (12, 3, 6, 9)
+    for deg in (0, 90, 180, 270):
+        x1, y1 = polar(cx, cy, face_r * 0.80, deg)
         x2, y2 = polar(cx, cy, face_r * 0.95, deg)
-        draw.line([(x1, y1), (x2, y2)], fill=MUTED, width=round(s * 0.02))
+        draw.line([(x1, y1), (x2, y2)], fill=MUTED, width=round(s * 0.025))
 
     # Hour hand — pointing ~10 o'clock (300°) for separation from minute hand
     ohx, ohy = polar(cx, cy, face_r * 0.40, 300)
