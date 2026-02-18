@@ -117,6 +117,10 @@
       50% { r: 8; opacity: 0.7; }
     }
 
+    @media (prefers-reduced-motion: reduce) {
+      .bus-dot.imminent { animation: none; }
+    }
+
     #countdown {
       text-align: center;
       padding: 8px 0 0;
