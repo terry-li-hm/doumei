@@ -9,8 +9,8 @@ const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
 const CX = 150, CY = 150;
 const R_FACE = 143;
-const R_OUTER = 130; // Route 77 arcs
-const R_INNER = 117; // Route 99 arcs
+const R_OUTER = 135; // Route 77 arcs
+const R_INNER = 122; // Route 99 arcs
 const ARC_SPAN = 6;  // degrees per bus marker
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -62,18 +62,6 @@ function initClock() {
     ln.setAttribute('stroke-width', major ? 2 : 1);
     ln.setAttribute('opacity', major ? 0.5 : 0.2);
     g.appendChild(ln);
-
-    if (i % 15 === 0) {
-      const hour = i === 0 ? 12 : i / 5;
-      const pos = polar(R_FACE - 24, deg);
-      const txt = document.createElementNS(NS, 'text');
-      txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y);
-      txt.setAttribute('text-anchor', 'middle');
-      txt.setAttribute('dominant-baseline', 'central');
-      txt.setAttribute('class', 'hour-label');
-      txt.textContent = hour;
-      g.appendChild(txt);
-    }
   }
 }
 
@@ -85,13 +73,11 @@ function tickClock() {
   const s = now.getSeconds(), ms = now.getMilliseconds();
   const sf = s + ms / 1000;
 
-  const secDeg  = (sf / 60) * 360;
   const minDeg  = ((m + sf / 60) / 60) * 360;
   const hourDeg = ((h + (m + sf / 60) / 60) / 12) * 360;
 
   document.getElementById('hand-hour').setAttribute('transform', `rotate(${hourDeg} ${CX} ${CY})`);
   document.getElementById('hand-min').setAttribute('transform',  `rotate(${minDeg} ${CX} ${CY})`);
-  document.getElementById('hand-sec').setAttribute('transform',  `rotate(${secDeg} ${CX} ${CY})`);
 
   // Sweep wedge: 20-min (120 deg) window from minute hand
   document.getElementById('sweep-wedge').setAttribute('d', wedgePath(R_FACE, minDeg, minDeg + 120));
@@ -112,8 +98,8 @@ function tickClock() {
 
 function renderBusArcs(data, stale) {
   const trip = TRIPS[currentTrip];
-  document.getElementById('trip-label').textContent = trip.label;
-  document.getElementById('trip-sublabel').textContent = trip.sublabel;
+  document.getElementById('trip-line').innerHTML =
+    `${trip.label} <span class="trip-sub">\u2014 ${trip.sublabel}</span> <span id="stale-badge">cached</span>`;
 
   currentETAs = [];
   if (data?.data) {
@@ -199,11 +185,12 @@ function updateLegend() {
     el.innerHTML = `<span class="empty-legend">No bus within ${MAX_MINUTES} min</span>`;
     return;
   }
-  el.innerHTML = valid.map(e => {
+  el.innerHTML = valid.map((e, i) => {
     const m = minutesUntil(e.eta);
     const t = m < 1 ? '<1m' : `${Math.floor(m)}m`;
     const sc = e.scheduled ? ' legend-scheduled' : '';
-    return `<span class="legend-item${sc}"><span class="legend-dot legend-dot-${e.route}"></span>${e.route} ${t}</span>`;
+    const primary = i === 0 ? ' legend-primary' : '';
+    return `<span class="legend-item${sc}${primary}"><span class="legend-dot legend-dot-${e.route}"></span>${e.route} ${t}</span>`;
   }).join('');
 }
 
@@ -256,7 +243,10 @@ window.addEventListener('pageshow', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggle-btn').addEventListener('click', switchTrip);
-  document.getElementById('clock-area').addEventListener('click', fetchETAs);
+  document.getElementById('clock-area').addEventListener('click', () => {
+    document.getElementById('updated').textContent = 'Refreshing\u2026';
+    fetchETAs();
+  });
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 

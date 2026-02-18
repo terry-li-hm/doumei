@@ -25,8 +25,7 @@
       --live: #22c55e;
       --hand-hour: #64748b;
       --hand-min: #f1f5f9;
-      --hand-sec: #38bdf8;
-      --sweep: rgba(56, 189, 248, 0.05);
+      --sweep: rgba(56, 189, 248, 0.12);
     }
 
     @media (prefers-color-scheme: light) {
@@ -36,14 +35,13 @@
         --text: #0f172a;
         --muted: #64748b;
         --accent: #0284c7;
-        --r77: #0ea5e9;
-        --r99: #7c3aed;
+        --r77: #0284c7;
+        --r99: #6d28d9;
         --scheduled: #d97706;
         --live: #16a34a;
         --hand-hour: #94a3b8;
         --hand-min: #0f172a;
-        --hand-sec: #0284c7;
-        --sweep: rgba(2, 132, 199, 0.06);
+        --sweep: rgba(2, 132, 199, 0.10);
       }
     }
 
@@ -58,20 +56,20 @@
     }
 
     header {
-      padding: 16px 20px 4px;
+      padding: 12px 20px 4px;
       text-align: center;
     }
 
-    header h1 {
-      font-size: 13px;
+    #trip-line {
+      font-size: 14px;
       font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      color: var(--muted);
+      color: var(--text);
     }
 
-    #trip-label { font-size: 18px; font-weight: 700; margin-top: 2px; }
-    #trip-sublabel { font-size: 12px; color: var(--muted); margin-top: 1px; }
+    #trip-line .trip-sub {
+      color: var(--muted);
+      font-weight: 400;
+    }
 
     #stale-badge {
       display: none;
@@ -80,7 +78,7 @@
       color: #000;
       padding: 2px 6px;
       border-radius: 4px;
-      margin-left: 8px;
+      margin-left: 6px;
       vertical-align: middle;
     }
 
@@ -95,40 +93,33 @@
       -webkit-tap-highlight-color: transparent;
     }
 
-    #clock { width: min(80vw, 320px); height: auto; }
-
-    .tick { stroke: var(--muted); }
-    .tick-major { stroke: var(--text); }
-    .hour-label {
-      fill: var(--muted);
-      font-size: 13px;
-      font-weight: 600;
+    #clock {
+      width: min(80vw, 320px);
+      height: auto;
       font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     }
 
+    .tick { stroke: var(--muted); }
+    .tick-major { stroke: var(--text); }
+
     #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
     #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
-    #hand-sec  { stroke: var(--hand-sec);  stroke-width: 1.5; stroke-linecap: round; }
-    #center-dot { fill: var(--hand-sec); }
+    #center-dot { fill: var(--accent); }
     #sweep-wedge { fill: var(--sweep); }
 
-    @media (prefers-reduced-motion: reduce) { #hand-sec { display: none; } }
-
     .bus-arc { fill: none; stroke-width: 8; stroke-linecap: round; }
-    .bus-arc-scheduled { stroke-dasharray: 4 3; }
+    .bus-arc-scheduled { opacity: 0.45; }
 
     #center-mins {
       fill: var(--text);
-      font-size: 28px;
+      font-size: 42px;
       font-weight: 700;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
       font-variant-numeric: tabular-nums;
     }
     #center-route {
       fill: var(--muted);
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
-      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
       text-transform: uppercase;
     }
 
@@ -137,7 +128,7 @@
       justify-content: center;
       flex-wrap: wrap;
       gap: 14px;
-      padding: 10px 0 0;
+      padding: 16px 0 0;
       font-size: 13px;
       font-weight: 600;
       font-variant-numeric: tabular-nums;
@@ -149,6 +140,7 @@
     .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
     .legend-dot-77 { background: var(--r77); }
     .legend-dot-99 { background: var(--r99); }
+    .legend-primary { color: var(--text); font-size: 15px; }
     .legend-scheduled { opacity: 0.6; }
     .empty-legend { font-weight: 500; }
 
@@ -163,8 +155,9 @@
       background: var(--surface);
       color: var(--accent);
       border: none;
-      padding: 8px 16px;
-      border-radius: 8px;
+      padding: 12px 20px;
+      min-height: 44px;
+      border-radius: 10px;
       font-size: 14px;
       font-weight: 600;
       cursor: pointer;
@@ -175,9 +168,7 @@
 </head>
 <body>
   <header>
-    <h1>&#x5230;&#x672A; <span id="stale-badge">cached</span></h1>
-    <div id="trip-label">Loading&hellip;</div>
-    <div id="trip-sublabel"></div>
+    <div id="trip-line">Loading&hellip; <span id="stale-badge">cached</span></div>
   </header>
 
   <main id="clock-area">
@@ -188,10 +179,9 @@
       <g id="arcs-inner"></g>
       <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />
       <line id="hand-min"  x1="150" y1="155" x2="150" y2="40" />
-      <line id="hand-sec"  x1="150" y1="165" x2="150" y2="35" />
       <circle id="center-dot" cx="150" cy="150" r="4" />
-      <text id="center-mins" x="150" y="200" text-anchor="middle">--</text>
-      <text id="center-route" x="150" y="215" text-anchor="middle"></text>
+      <text id="center-mins" x="150" y="195" text-anchor="middle">--</text>
+      <text id="center-route" x="150" y="213" text-anchor="middle"></text>
     </svg>
     <div id="legend" aria-live="polite">
       <span class="empty-legend">Loading&hellip;</span>
