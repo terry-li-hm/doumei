@@ -1,93 +1,222 @@
+/* --- Constants --- */
+
 const TRIPS = {
-  kornhill: {
-    stop: '001313',
-    label: 'To Kornhill',
-    sublabel: 'from Tai Hong House \u592A\u5EB7\u6A13',
-  },
-  grandprom: {
-    stop: '001359',
-    label: 'To Grand Promenade',
-    sublabel: 'from Yiu Wah House \u8000\u83EF\u6A13',
-  },
+  kornhill: { stop: '001313', label: 'To Kornhill', sublabel: 'from Tai Hong House \u592A\u5EB7\u6A13' },
+  grandprom: { stop: '001359', label: 'To Grand Promenade', sublabel: 'from Yiu Wah House \u8000\u83EF\u6A13' },
 };
 
 const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
+const CX = 150, CY = 150;
+const R_FACE = 143;
+const R_OUTER = 130; // Route 77 arcs
+const R_INNER = 117; // Route 99 arcs
+const ARC_SPAN = 6;  // degrees per bus marker
+const NS = 'http://www.w3.org/2000/svg';
+
+/* --- State --- */
+
 let currentTrip = new Date().getHours() < 14 ? 'kornhill' : 'grandprom';
 let refreshTimer = null;
+let animFrame = null;
+let currentETAs = [];
+let lastCountdownSec = -1;
+let dataLoaded = false;
 
-function formatTime(isoString) {
-  const d = new Date(isoString);
-  return d.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
+/* --- Geometry --- */
+
+function polar(r, deg) {
+  const rad = (deg - 90) * Math.PI / 180;
+  return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
 }
 
-function minutesUntil(isoString) {
-  return (new Date(isoString) - new Date()) / 60000;
+function arcPath(r, start, end) {
+  const p1 = polar(r, start), p2 = polar(r, end);
+  const large = (end - start) > 180 ? 1 : 0;
+  return `M${p1.x},${p1.y} A${r},${r} 0 ${large} 1 ${p2.x},${p2.y}`;
 }
 
-function renderETAs(data, stale) {
-  const container = document.getElementById('eta-list');
+function wedgePath(r, start, end) {
+  const p1 = polar(r, start), p2 = polar(r, end);
+  const large = (end - start) > 180 ? 1 : 0;
+  return `M${CX},${CY} L${p1.x},${p1.y} A${r},${r} 0 ${large} 1 ${p2.x},${p2.y} Z`;
+}
+
+function minToAngle(m) { return (m / 60) * 360; }
+
+function minutesUntil(iso) { return (new Date(iso) - Date.now()) / 60000; }
+
+/* --- Clock init --- */
+
+function initClock() {
+  const g = document.getElementById('ticks');
+  for (let i = 0; i < 60; i++) {
+    const deg = (i / 60) * 360;
+    const major = i % 5 === 0;
+    const p1 = polar(major ? R_FACE - 12 : R_FACE - 6, deg);
+    const p2 = polar(R_FACE, deg);
+    const ln = document.createElementNS(NS, 'line');
+    ln.setAttribute('x1', p1.x); ln.setAttribute('y1', p1.y);
+    ln.setAttribute('x2', p2.x); ln.setAttribute('y2', p2.y);
+    ln.setAttribute('class', major ? 'tick-major' : 'tick');
+    ln.setAttribute('stroke-width', major ? 2 : 1);
+    ln.setAttribute('opacity', major ? 0.5 : 0.2);
+    g.appendChild(ln);
+
+    if (i % 15 === 0) {
+      const hour = i === 0 ? 12 : i / 5;
+      const pos = polar(R_FACE - 24, deg);
+      const txt = document.createElementNS(NS, 'text');
+      txt.setAttribute('x', pos.x); txt.setAttribute('y', pos.y);
+      txt.setAttribute('text-anchor', 'middle');
+      txt.setAttribute('dominant-baseline', 'central');
+      txt.setAttribute('class', 'hour-label');
+      txt.textContent = hour;
+      g.appendChild(txt);
+    }
+  }
+}
+
+/* --- Animation loop --- */
+
+function tickClock() {
+  const now = new Date();
+  const h = now.getHours() % 12, m = now.getMinutes();
+  const s = now.getSeconds(), ms = now.getMilliseconds();
+  const sf = s + ms / 1000;
+
+  const secDeg  = (sf / 60) * 360;
+  const minDeg  = ((m + sf / 60) / 60) * 360;
+  const hourDeg = ((h + (m + sf / 60) / 60) / 12) * 360;
+
+  document.getElementById('hand-hour').setAttribute('transform', `rotate(${hourDeg} ${CX} ${CY})`);
+  document.getElementById('hand-min').setAttribute('transform',  `rotate(${minDeg} ${CX} ${CY})`);
+  document.getElementById('hand-sec').setAttribute('transform',  `rotate(${secDeg} ${CX} ${CY})`);
+
+  // Sweep wedge: 20-min (120 deg) window from minute hand
+  document.getElementById('sweep-wedge').setAttribute('d', wedgePath(R_FACE, minDeg, minDeg + 120));
+
+  // Update text once per second
+  const sec = Math.floor(now.getTime() / 1000);
+  if (sec !== lastCountdownSec) {
+    lastCountdownSec = sec;
+    pruneExpired();
+    updateCenter();
+    updateLegend();
+  }
+
+  animFrame = requestAnimationFrame(tickClock);
+}
+
+/* --- Bus arcs --- */
+
+function renderBusArcs(data, stale) {
   const trip = TRIPS[currentTrip];
-
   document.getElementById('trip-label').textContent = trip.label;
   document.getElementById('trip-sublabel').textContent = trip.sublabel;
 
-  if (!data || !data.data) {
-    container.innerHTML = '<div class="empty">No data available</div>';
-    return;
-  }
-
-  // Flatten all ETAs from all routes into a single timeline
-  const allETAs = [];
-  for (const routeData of data.data) {
-    for (const e of routeData.data || []) {
-      if (e.eta && minutesUntil(e.eta) > 0 && minutesUntil(e.eta) <= MAX_MINUTES) {
-        allETAs.push({ ...e, route: routeData.route });
+  currentETAs = [];
+  if (data?.data) {
+    for (const rd of data.data) {
+      for (const e of rd.data || []) {
+        if (!e.eta) continue;
+        const mins = minutesUntil(e.eta);
+        if (mins > 0 && mins <= MAX_MINUTES) {
+          currentETAs.push({
+            route: rd.route,
+            eta: e.eta,
+            scheduled: (e.rmk_en || '').toLowerCase().includes('scheduled'),
+          });
+        }
       }
     }
   }
-  allETAs.sort((a, b) => new Date(a.eta) - new Date(b.eta));
+  currentETAs.sort((a, b) => new Date(a.eta) - new Date(b.eta));
 
-  if (allETAs.length === 0) {
-    container.innerHTML = `<div class="empty">No bus within ${MAX_MINUTES} min</div>`;
-    return;
-  }
+  dataLoaded = true;
+  drawArcs();
+  updateCenter();
+  updateLegend();
 
-  const html = allETAs
-    .map((e, i) => {
-      const mins = Math.round(minutesUntil(e.eta));
-      const isScheduled = (e.rmk_en || '').toLowerCase().includes('scheduled');
-      const cls = isScheduled ? 'scheduled' : 'live';
-      const first = i === 0 ? ' first' : '';
-      return `<div class="eta-row${first}">
-        <span class="eta-time">${formatTime(e.eta)}</span>
-        <span class="eta-mins">${mins}m</span>
-        <span class="route-badge route-${e.route}">${e.route}</span>
-        <span class="eta-status ${cls}">${isScheduled ? 'scheduled' : ''}</span>
-      </div>`;
-    })
-    .join('');
-
-  container.innerHTML = html;
-
-  const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
-  document.getElementById('updated').textContent = stale
-    ? `Cached \u00B7 updating\u2026`
-    : `Updated ${timeStr}`;
-
+  const timeStr = new Date().toLocaleTimeString('en-HK', { hour: '2-digit', minute: '2-digit', hour12: false });
+  document.getElementById('updated').textContent = stale ? 'Cached \u00B7 updating\u2026' : `Updated ${timeStr}`;
   document.getElementById('stale-badge').style.display = stale ? 'inline' : 'none';
 }
 
+function drawArcs() {
+  const outer = document.getElementById('arcs-outer');
+  const inner = document.getElementById('arcs-inner');
+  outer.replaceChildren();
+  inner.replaceChildren();
+
+  for (const e of currentETAs) {
+    const t = new Date(e.eta);
+    const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
+    const half = ARC_SPAN / 2;
+    const r = e.route === '77' ? R_OUTER : R_INNER;
+    const grp = e.route === '77' ? outer : inner;
+    const color = e.route === '77' ? 'var(--r77)' : 'var(--r99)';
+
+    const path = document.createElementNS(NS, 'path');
+    path.setAttribute('d', arcPath(r, deg - half, deg + half));
+    path.setAttribute('stroke', color);
+    path.setAttribute('class', 'bus-arc' + (e.scheduled ? ' bus-arc-scheduled' : ''));
+    grp.appendChild(path);
+  }
+}
+
+function pruneExpired() {
+  const before = currentETAs.length;
+  currentETAs = currentETAs.filter(e => minutesUntil(e.eta) > 0);
+  if (currentETAs.length !== before) drawArcs();
+}
+
+/* --- Center readout --- */
+
+function updateCenter() {
+  const mEl = document.getElementById('center-mins');
+  const rEl = document.getElementById('center-route');
+
+  const next = currentETAs.find(e => minutesUntil(e.eta) > 0);
+  if (!next) {
+    mEl.textContent = '--';
+    rEl.textContent = dataLoaded ? 'no bus' : '';
+    return;
+  }
+  const mins = minutesUntil(next.eta);
+  mEl.textContent = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
+  rEl.textContent = `Route ${next.route}`;
+}
+
+/* --- Legend strip --- */
+
+function updateLegend() {
+  const el = document.getElementById('legend');
+  if (!dataLoaded) return;
+
+  const valid = currentETAs.filter(e => minutesUntil(e.eta) > 0);
+  if (!valid.length) {
+    el.innerHTML = `<span class="empty-legend">No bus within ${MAX_MINUTES} min</span>`;
+    return;
+  }
+  el.innerHTML = valid.map(e => {
+    const m = minutesUntil(e.eta);
+    const t = m < 1 ? '<1m' : `${Math.floor(m)}m`;
+    const sc = e.scheduled ? ' legend-scheduled' : '';
+    return `<span class="legend-item${sc}"><span class="legend-dot legend-dot-${e.route}"></span>${e.route} ${t}</span>`;
+  }).join('');
+}
+
+/* --- Data fetching --- */
+
 async function fetchETAs() {
   const trip = TRIPS[currentTrip];
-
   try {
     const res = await fetch(`/api/eta?stop=${trip.stop}`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     localStorage.setItem(CACHE_KEY, JSON.stringify({ trip: currentTrip, data }));
-    renderETAs(data, false);
+    renderBusArcs(data, false);
   } catch (err) {
     console.error('Fetch error:', err);
     document.getElementById('updated').textContent = 'Error \u00B7 tap to retry';
@@ -98,13 +227,9 @@ function loadCached() {
   try {
     const raw = localStorage.getItem(CACHE_KEY);
     if (!raw) return;
-    const cached = JSON.parse(raw);
-    if (cached.trip === currentTrip) {
-      renderETAs(cached.data, true);
-    }
-  } catch {
-    // ignore corrupt cache
-  }
+    const { trip, data } = JSON.parse(raw);
+    if (trip === currentTrip) renderBusArcs(data, true);
+  } catch { /* ignore corrupt cache */ }
 }
 
 function switchTrip() {
@@ -113,39 +238,30 @@ function switchTrip() {
   fetchETAs();
 }
 
-function startPolling() {
-  fetchETAs();
-  refreshTimer = setInterval(fetchETAs, 30000);
-}
+/* --- Lifecycle --- */
 
-function stopPolling() {
-  clearInterval(refreshTimer);
-  refreshTimer = null;
-}
+function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 30000); }
+function stopPolling()  { clearInterval(refreshTimer); refreshTimer = null; }
+function startAnim()    { if (!animFrame) tickClock(); }
+function stopAnim()     { if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } }
 
-// Visibility-driven refresh (primary on iOS)
 document.addEventListener('visibilitychange', () => {
-  if (document.hidden) {
-    stopPolling();
-  } else {
-    startPolling();
-  }
+  if (document.hidden) { stopPolling(); stopAnim(); }
+  else { startPolling(); startAnim(); }
 });
 
-// iOS page cache restoration fallback
 window.addEventListener('pageshow', (e) => {
-  if (e.persisted) startPolling();
+  if (e.persisted) { startPolling(); startAnim(); }
 });
 
-// Init
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('toggle-btn').addEventListener('click', switchTrip);
-  document.getElementById('eta-list').addEventListener('click', fetchETAs);
+  document.getElementById('clock-area').addEventListener('click', fetchETAs);
 
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('/sw.js');
-  }
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
+  initClock();
   loadCached();
   startPolling();
+  startAnim();
 });

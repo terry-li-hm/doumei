@@ -19,9 +19,14 @@
       --text: #f1f5f9;
       --muted: #94a3b8;
       --accent: #38bdf8;
+      --r77: #38bdf8;
+      --r99: #a78bfa;
       --scheduled: #f59e0b;
       --live: #22c55e;
-      --radius: 12px;
+      --hand-hour: #64748b;
+      --hand-min: #f1f5f9;
+      --hand-sec: #38bdf8;
+      --sweep: rgba(56, 189, 248, 0.05);
     }
 
     @media (prefers-color-scheme: light) {
@@ -31,8 +36,14 @@
         --text: #0f172a;
         --muted: #64748b;
         --accent: #0284c7;
+        --r77: #0ea5e9;
+        --r99: #7c3aed;
         --scheduled: #d97706;
         --live: #16a34a;
+        --hand-hour: #94a3b8;
+        --hand-min: #0f172a;
+        --hand-sec: #0284c7;
+        --sweep: rgba(2, 132, 199, 0.06);
       }
     }
 
@@ -47,7 +58,8 @@
     }
 
     header {
-      padding: 20px 20px 12px;
+      padding: 16px 20px 4px;
+      text-align: center;
     }
 
     header h1 {
@@ -58,17 +70,8 @@
       color: var(--muted);
     }
 
-    #trip-label {
-      font-size: 24px;
-      font-weight: 700;
-      margin-top: 4px;
-    }
-
-    #trip-sublabel {
-      font-size: 14px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    #trip-label { font-size: 18px; font-weight: 700; margin-top: 2px; }
+    #trip-sublabel { font-size: 12px; color: var(--muted); margin-top: 1px; }
 
     #stale-badge {
       display: none;
@@ -83,94 +86,79 @@
 
     main {
       flex: 1;
-      padding: 8px 20px;
-    }
-
-    .eta-row {
-      background: var(--surface);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-bottom: 8px;
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 12px;
+      justify-content: center;
+      padding: 0 20px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
     }
 
-    .eta-row.first {
-      padding: 18px 16px;
-      margin-bottom: 12px;
+    #clock { width: min(80vw, 320px); height: auto; }
+
+    .tick { stroke: var(--muted); }
+    .tick-major { stroke: var(--text); }
+    .hour-label {
+      fill: var(--muted);
+      font-size: 13px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
     }
 
-    .eta-row.first .eta-time {
-      font-size: 32px;
-    }
+    #hand-hour { stroke: var(--hand-hour); stroke-width: 4; stroke-linecap: round; }
+    #hand-min  { stroke: var(--hand-min);  stroke-width: 3; stroke-linecap: round; }
+    #hand-sec  { stroke: var(--hand-sec);  stroke-width: 1.5; stroke-linecap: round; }
+    #center-dot { fill: var(--hand-sec); }
+    #sweep-wedge { fill: var(--sweep); }
 
-    .eta-row.first .eta-mins {
-      font-size: 16px;
-    }
+    @media (prefers-reduced-motion: reduce) { #hand-sec { display: none; } }
 
-    .eta-time {
-      font-size: 22px;
+    .bus-arc { fill: none; stroke-width: 8; stroke-linecap: round; }
+    .bus-arc-scheduled { stroke-dasharray: 4 3; }
+
+    #center-mins {
+      fill: var(--text);
+      font-size: 28px;
       font-weight: 700;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
       font-variant-numeric: tabular-nums;
-      min-width: 60px;
+    }
+    #center-route {
+      fill: var(--muted);
+      font-size: 11px;
+      font-weight: 600;
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+      text-transform: uppercase;
     }
 
-    .eta-mins {
-      font-size: 14px;
+    #legend {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      padding: 10px 0 0;
+      font-size: 13px;
+      font-weight: 600;
+      font-variant-numeric: tabular-nums;
       color: var(--muted);
-      min-width: 32px;
+      min-height: 32px;
+      align-items: center;
     }
-
-    .route-badge {
-      font-size: 14px;
-      font-weight: 700;
-      padding: 3px 10px;
-      border-radius: 6px;
-      background: var(--accent);
-      color: var(--bg);
-    }
-
-    .route-77 { background: #38bdf8; }
-    .route-99 { background: #a78bfa; }
-
-    .eta-status {
-      font-size: 12px;
-      margin-left: auto;
-    }
-
-    .eta-status.live::before {
-      content: '';
-      display: inline-block;
-      width: 7px;
-      height: 7px;
-      border-radius: 50%;
-      background: var(--live);
-    }
-
-    .eta-status.scheduled {
-      color: var(--scheduled);
-    }
-
-    .empty {
-      text-align: center;
-      color: var(--muted);
-      padding: 40px 0;
-      font-size: 16px;
-    }
+    .legend-item { display: flex; align-items: center; gap: 5px; }
+    .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .legend-dot-77 { background: var(--r77); }
+    .legend-dot-99 { background: var(--r99); }
+    .legend-scheduled { opacity: 0.6; }
+    .empty-legend { font-weight: 500; }
 
     footer {
-      padding: 12px 20px 20px;
+      padding: 8px 20px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
     }
-
-    #updated {
-      font-size: 13px;
-      color: var(--muted);
-    }
-
+    #updated { font-size: 13px; color: var(--muted); }
     #toggle-btn {
       background: var(--surface);
       color: var(--accent);
@@ -182,10 +170,7 @@
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
     }
-
-    #toggle-btn:active {
-      opacity: 0.7;
-    }
+    #toggle-btn:active { opacity: 0.7; }
   </style>
 </head>
 <body>
@@ -195,8 +180,22 @@
     <div id="trip-sublabel"></div>
   </header>
 
-  <main id="eta-list">
-    <div class="empty">Loading&hellip;</div>
+  <main id="clock-area">
+    <svg id="clock" viewBox="0 0 300 300" role="img" aria-label="Analog clock showing bus arrival times">
+      <path id="sweep-wedge" />
+      <g id="ticks"></g>
+      <g id="arcs-outer"></g>
+      <g id="arcs-inner"></g>
+      <line id="hand-hour" x1="150" y1="155" x2="150" y2="80" />
+      <line id="hand-min"  x1="150" y1="155" x2="150" y2="40" />
+      <line id="hand-sec"  x1="150" y1="165" x2="150" y2="35" />
+      <circle id="center-dot" cx="150" cy="150" r="4" />
+      <text id="center-mins" x="150" y="200" text-anchor="middle">--</text>
+      <text id="center-route" x="150" y="215" text-anchor="middle"></text>
+    </svg>
+    <div id="legend" aria-live="polite">
+      <span class="empty-legend">Loading&hellip;</span>
+    </div>
   </main>
 
   <footer>
