@@ -1,19 +1,20 @@
 /* --- Constants --- */
 
 const TRIPS = {
-  kornhill: { stop: '001313', label: 'To Kornhill', sublabel: 'from Tai Hong House \u592A\u5EB7\u6A13' },
-  grandprom: { stop: '001359', label: 'To Grand Promenade', sublabel: 'from Yiu Wah House \u8000\u83EF\u6A13' },
+  kornhill: { stop: '001313', label: 'To Kornhill', sublabel: 'from Tai Hong House' },
+  grandprom: { stop: '001359', label: 'To Grand Promenade', sublabel: 'from Yiu Wah House' },
 };
 
 const CACHE_KEY = 'bus_eta_cache';
 const MAX_MINUTES = 20;
 const CX = 150, CY = 150;
 const R_FACE = 143;
-const R_OUTER = 135;  // Route 77 arcs
-const R_INNER = 122;  // Route 99 arcs
-const ARC_SPAN = 6;   // degrees per bus marker
-const R_LBL_OUT = 147; // label radius outside outer arcs
-const R_LBL_IN = 108;  // label radius inside inner arcs
+const R_DOT_OUT = 133;  // Route 77 dots
+const R_DOT_IN = 120;   // Route 99 dots
+const DOT_R = 5;         // dot radius
+const R_LBL_OUT = 147;  // label radius outside outer dots
+const R_LBL_IN = 106;   // label radius inside inner dots
+const LBL_OFFSET = 14;  // radial offset for overlapping labels
 const NS = 'http://www.w3.org/2000/svg';
 
 /* --- State --- */
@@ -32,10 +33,9 @@ function polar(r, deg) {
   return { x: CX + r * Math.cos(rad), y: CY + r * Math.sin(rad) };
 }
 
-function arcPath(r, start, end) {
-  const p1 = polar(r, start), p2 = polar(r, end);
-  const large = (end - start) > 180 ? 1 : 0;
-  return `M${p1.x},${p1.y} A${r},${r} 0 ${large} 1 ${p2.x},${p2.y}`;
+function angleDist(a, b) {
+  const d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
 }
 
 function wedgePath(r, start, end) {
@@ -137,28 +137,40 @@ function drawArcs() {
   outer.replaceChildren();
   inner.replaceChildren();
 
+  const placed = { outer: [], inner: [] }; // track label angles per ring
+
   for (const e of currentETAs) {
     const t = new Date(e.eta);
     const deg = minToAngle(t.getMinutes() + t.getSeconds() / 60);
-    const half = ARC_SPAN / 2;
-    const r = e.route === '77' ? R_OUTER : R_INNER;
-    const grp = e.route === '77' ? outer : inner;
+    const isOuter = e.route === '77';
+    const r = isOuter ? R_DOT_OUT : R_DOT_IN;
+    const grp = isOuter ? outer : inner;
+    const ring = isOuter ? 'outer' : 'inner';
+    const sc = e.scheduled ? ' scheduled' : '';
 
-    const path = document.createElementNS(NS, 'path');
-    path.setAttribute('d', arcPath(r, deg - half, deg + half));
-    path.setAttribute('class', 'bus-arc' + (e.scheduled ? ' bus-arc-scheduled' : ''));
-    grp.appendChild(path);
+    // Dot
+    const pos = polar(r, deg);
+    const dot = document.createElementNS(NS, 'circle');
+    dot.setAttribute('cx', pos.x);
+    dot.setAttribute('cy', pos.y);
+    dot.setAttribute('r', DOT_R);
+    dot.setAttribute('class', 'bus-dot' + sc);
+    grp.appendChild(dot);
 
-    // Minute label next to arc
+    // Label — offset radially if close to a previous label on same ring
     const mins = minutesUntil(e.eta);
-    const labelR = e.route === '77' ? R_LBL_OUT : R_LBL_IN;
-    const pos = polar(labelR, deg);
+    let labelR = isOuter ? R_LBL_OUT : R_LBL_IN;
+    const tooClose = placed[ring].some(a => angleDist(deg, a) < 15);
+    if (tooClose) labelR += isOuter ? LBL_OFFSET : -LBL_OFFSET;
+    placed[ring].push(deg);
+
+    const lpos = polar(labelR, deg);
     const txt = document.createElementNS(NS, 'text');
-    txt.setAttribute('x', pos.x);
-    txt.setAttribute('y', pos.y);
+    txt.setAttribute('x', lpos.x);
+    txt.setAttribute('y', lpos.y);
     txt.setAttribute('text-anchor', 'middle');
     txt.setAttribute('dominant-baseline', 'central');
-    txt.setAttribute('class', 'arc-label' + (e.scheduled ? ' bus-arc-scheduled' : ''));
+    txt.setAttribute('class', 'dot-label' + sc);
     txt.textContent = mins < 1 ? '<1' : `${Math.floor(mins)}m`;
     grp.appendChild(txt);
   }
