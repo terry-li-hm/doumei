@@ -44,11 +44,7 @@ def draw_icon(size):
     pad = s * 0.12
     face_r = (s - 2 * pad) / 2
 
-    # Subtle clock face circle (gives structure without being heavy)
-    draw.ellipse(
-        [cx - face_r, cy - face_r, cx + face_r, cy + face_r],
-        fill=None, outline=(255, 255, 255, 18), width=round(s * 0.006),
-    )
+    # No bezel circle — keep it clean, let tick marks define the face
 
     # 4 cardinal ticks — bolder
     for deg in (0, 90, 180, 270):
