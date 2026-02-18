@@ -12,7 +12,7 @@ const R_FACE = 143;
 const R_OUTER = 135; // Route 77 arcs
 const R_INNER = 122; // Route 99 arcs
 const ARC_SPAN = 6;   // degrees per bus marker
-const R_LBL_OUT = 149; // label radius outside outer arcs
+const R_LBL_OUT = 147; // label radius outside outer arcs
 const R_LBL_IN = 108;  // label radius inside inner arcs
 const NS = 'http://www.w3.org/2000/svg';
 
@@ -216,7 +216,7 @@ function switchTrip() {
 
 /* --- Lifecycle --- */
 
-function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 10000); }
+function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, 15000); }
 function stopPolling()  { clearInterval(refreshTimer); refreshTimer = null; }
 function startAnim()    { if (!animFrame) tickClock(); }
 function stopAnim()     { if (animFrame) { cancelAnimationFrame(animFrame); animFrame = null; } }
