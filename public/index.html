@@ -6,7 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Doumei">
-  <meta name="theme-color" content="#0f172a">
+  <meta name="theme-color" content="#1a1b2e" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)">
   <meta property="og:title" content="Doumei">
   <meta property="og:description" content="Bus ETA for Hong Kong">
   <meta property="og:image" content="/icon-1024.png">
@@ -32,9 +33,11 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #0f172a;
-      --text: #f1f5f9;
-      --muted: #64748b;
+      --bg: #1a1b2e;
+      --bg-subtle: #1e1f35;
+      --text: #e8e6e3;
+      --muted: #6b6e7b;
+      --border: rgba(255,255,255,0.06);
       --r77: #7dd3fc;
       --r99: #fbbf24;
       --urgency-green: #4ade80;
@@ -44,9 +47,11 @@
 
     @media (prefers-color-scheme: light) {
       :root {
-        --bg: #f8fafc;
-        --text: #0f172a;
-        --muted: #94a3b8;
+        --bg: #f5f3ef;
+        --bg-subtle: #eae7e0;
+        --text: #1c1c1e;
+        --muted: #8e8e93;
+        --border: rgba(0,0,0,0.06);
         --r77: #1e40af;
         --r99: #c2410c;
         --urgency-green: #16a34a;
@@ -64,14 +69,16 @@
       display: flex;
       flex-direction: column;
       transition: background-color 1s ease 0.2s;
+      background-image:
+        radial-gradient(ellipse 120% 80% at 50% 0%, var(--bg-subtle) 0%, transparent 60%);
     }
 
     header {
-      padding: 16px 20px 4px;
+      padding: 20px 20px 12px;
       text-align: center;
     }
-    #trip-label { font-size: 22px; font-weight: 700; }
-    #trip-sublabel { font-size: 13px; color: var(--muted); margin-top: 2px; }
+    #trip-label { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
+    #trip-sublabel { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
 
     main {
       flex: 1;
@@ -88,10 +95,11 @@
 
     #route-label {
       font-family: 'JetBrains Mono', 'SF Mono', monospace;
-      font-size: clamp(20px, 5vw, 28px);
+      font-size: clamp(18px, 4.5vw, 24px);
       font-weight: 700;
-      opacity: 0.6;
+      opacity: 0.5;
       font-variant-numeric: tabular-nums;
+      letter-spacing: 0.06em;
     }
 
     #hero {
@@ -117,6 +125,7 @@
       color: var(--urgency-green);
       font-size: clamp(80px, 25vw, 140px);
       font-weight: 700;
+      text-shadow: 0 0 80px color-mix(in srgb, var(--urgency-green) 15%, transparent);
       animation: breathe 4s ease-in-out infinite;
     }
     [data-urgency="green"] #status {
@@ -129,6 +138,7 @@
       color: var(--urgency-amber);
       font-size: clamp(88px, 28vw, 152px);
       font-weight: 800;
+      text-shadow: 0 0 80px color-mix(in srgb, var(--urgency-amber) 18%, transparent);
     }
     [data-urgency="amber"] #status {
       color: var(--urgency-amber);
@@ -185,26 +195,31 @@
     }
     .then-item {
       font-family: 'JetBrains Mono', 'SF Mono', monospace;
-      font-size: clamp(14px, 3.5vw, 17px);
+      font-size: clamp(13px, 3.2vw, 16px);
       font-weight: 400;
       font-variant-numeric: tabular-nums;
-      opacity: 0.5;
-      letter-spacing: 0.05em;
+      opacity: 0.45;
+      letter-spacing: 0.04em;
     }
-    .then-item:first-child { opacity: 0.7; font-weight: 500; }
+    .then-item:first-child { opacity: 0.6; font-weight: 500; }
 
     /* --- Plan B --- */
 
     #plan-b {
       margin-top: clamp(24px, 5vh, 40px);
       text-align: center;
+      padding: 14px 20px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: color-mix(in srgb, var(--bg-subtle) 50%, transparent);
     }
     #plan-b-label {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
       text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 8px;
+      letter-spacing: 0.12em;
+      margin-bottom: 10px;
+      font-weight: 500;
     }
     #plan-b-list {
       display: flex;
@@ -223,9 +238,10 @@
 
     #updated {
       margin-top: clamp(16px, 3vh, 32px);
-      font-size: 12px;
+      font-size: 11px;
       color: var(--muted);
-      opacity: 0.5;
+      opacity: 0.4;
+      letter-spacing: 0.03em;
     }
 
     /* --- Stale data dim --- */
