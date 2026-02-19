@@ -42,6 +42,7 @@
       --urgency-green: #4ade80;
       --urgency-amber: #fbbf24;
       --urgency-red: #f87171;
+      --urgency-ghost: #60a5fa;
     }
 
     @media (prefers-color-scheme: light) {
@@ -56,6 +57,7 @@
         --urgency-green: #16a34a;
         --urgency-amber: #d97706;
         --urgency-red: #dc2626;
+        --urgency-ghost: #3b82f6;
       }
     }
 
@@ -182,6 +184,23 @@
       letter-spacing: 0.15em;
     }
 
+    [data-urgency="ghost"] #hero {
+      color: var(--urgency-ghost);
+      font-size: clamp(48px, 14vw, 80px);
+      font-weight: 700;
+      opacity: 0.6;
+    }
+    [data-urgency="ghost"] #status {
+      color: var(--urgency-ghost);
+      font-size: clamp(16px, 4.5vw, 24px);
+      letter-spacing: 0.2em;
+      opacity: 0.5;
+    }
+    [data-urgency="ghost"] #route-label {
+      color: var(--urgency-ghost);
+      opacity: 0.4;
+    }
+
     @keyframes breathe {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.02); }
@@ -190,6 +209,11 @@
     @keyframes alarm-glow {
       0%, 100% { text-shadow: 0 0 20px color-mix(in srgb, var(--urgency-red) 30%, transparent); }
       50% { text-shadow: 0 0 60px color-mix(in srgb, var(--urgency-red) 60%, transparent); }
+    }
+
+    @keyframes grain-breathe {
+      0%, 100% { opacity: 0.25; }
+      50% { opacity: 0.4; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -279,13 +303,18 @@
       opacity: 0.3;
       filter: url(#grain);
       mix-blend-mode: multiply;
+      animation: grain-breathe 6s ease-in-out infinite;
     }
     @media (prefers-color-scheme: dark) {
       body::after { mix-blend-mode: soft-light; opacity: 0.4; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      body::after { animation: none; }
+    }
 
     /* --- Stale data dim --- */
     body.stale-data main { opacity: 0.5; transition: opacity 0.3s; }
+    body.stale-data::after { animation: none; opacity: 0.15; transition: opacity 1s; }
 
     /* --- Accessibility --- */
     @media (forced-colors: active) {

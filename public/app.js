@@ -8,6 +8,7 @@ const STALE_MS = 60000;
 const MAX_MINUTES = 20;
 const POLL_MS = 15000;
 const CACHE_KEY = 'bus_eta_cache';
+const GHOST_MINS = 3; // show departed bus for up to 3 min after leaving
 
 /* --- State --- */
 
@@ -50,21 +51,37 @@ function updateDisplay() {
     return;
   }
 
-  // Filter active ETAs
+  // Split into departed (ghost) and upcoming
   const active = currentETAs.filter(e => minutesUntil(e.eta) > 0);
+  const departed = currentETAs.filter(e => {
+    const m = minutesUntil(e.eta);
+    return m <= 0 && m > -GHOST_MINS;
+  });
 
   if (active.length === 0) {
-    document.documentElement.dataset.urgency = 'none';
-    hero.textContent = lastFetchTime ? '—' : '--';
-    route.textContent = '--';
-    status.textContent = lastFetchTime ? 'No bus soon' : '';
-    thenList.innerHTML = '';
+    // Ghost state: show most recently departed bus in blue
+    if (departed.length > 0 && lastFetchTime) {
+      const ghost = departed[departed.length - 1]; // most recent departure
+      const agoMins = -minutesUntil(ghost.eta);
+      document.documentElement.dataset.urgency = 'ghost';
+      route.textContent = ghost.route;
+      hero.textContent = agoMins < 1 ? 'Just left' : `${Math.ceil(agoMins)}m ago`;
+      status.textContent = 'Next cycle';
+      thenList.textContent = '';
+    } else {
+      document.documentElement.dataset.urgency = 'none';
+      hero.textContent = lastFetchTime ? '—' : '--';
+      route.textContent = '--';
+      status.textContent = lastFetchTime ? 'No bus soon' : '';
+      thenList.textContent = '';
+    }
     updatePlanB(lastFetchTime && !document.body.classList.contains('stale-data'));
     return;
   }
 
-  // Show Plan B if forced, otherwise hide
-  if (forcePlanB) {
+  // Show Plan B if forced OR in red zone (auto-peek)
+  const nextMins = minutesUntil(active[0].eta);
+  if (forcePlanB || urgency(nextMins) === 'red') {
     updatePlanB(true);
   } else {
     document.getElementById('plan-b').hidden = true;
@@ -180,7 +197,8 @@ function renderUI(data, stale) {
       for (const e of rd.data || []) {
         if (!e.eta) continue;
         const mins = minutesUntil(e.eta);
-        if (mins > 0 && mins <= MAX_MINUTES) {
+        // Keep recently departed (ghost) and upcoming buses
+        if (mins > -GHOST_MINS && mins <= MAX_MINUTES) {
           currentETAs.push({ route: rd.route, eta: e.eta });
         }
       }
