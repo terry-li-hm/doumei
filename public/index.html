@@ -6,8 +6,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Doumei">
-  <meta name="theme-color" content="#1a1b2e" media="(prefers-color-scheme: dark)">
-  <meta name="theme-color" content="#f5f3ef" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0C0C0C" media="(prefers-color-scheme: dark)">
+  <meta name="theme-color" content="#F3F3EE" media="(prefers-color-scheme: light)">
   <meta property="og:title" content="Doumei">
   <meta property="og:description" content="Bus ETA for Hong Kong">
   <meta property="og:image" content="/icon-1024.png">
@@ -33,13 +33,13 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #1a1b2e;
-      --bg-subtle: #1e1f35;
-      --text: #e8e6e3;
-      --muted: #6b6e7b;
-      --border: rgba(255,255,255,0.06);
-      --r77: #7dd3fc;
-      --r99: #fbbf24;
+      --bg: #0C0C0C;
+      --bg-subtle: #1a1a1a;
+      --text: #FFFFFF;
+      --muted: #7a7a7a;
+      --border: rgba(255,255,255,0.08);
+      --r77: #1FB8CD;
+      --r99: #F5C1A9;
       --urgency-green: #4ade80;
       --urgency-amber: #fbbf24;
       --urgency-red: #f87171;
@@ -47,13 +47,13 @@
 
     @media (prefers-color-scheme: light) {
       :root {
-        --bg: #f5f3ef;
-        --bg-subtle: #eae7e0;
-        --text: #1c1c1e;
-        --muted: #8e8e93;
-        --border: rgba(0,0,0,0.06);
-        --r77: #1e40af;
-        --r99: #c2410c;
+        --bg: #F3F3EE;
+        --bg-subtle: #E4E3D4;
+        --text: #13343B;
+        --muted: #8a8a82;
+        --border: rgba(19,52,59,0.08);
+        --r77: #1A6872;
+        --r99: #A84B2F;
         --urgency-green: #16a34a;
         --urgency-amber: #d97706;
         --urgency-red: #dc2626;
@@ -209,7 +209,7 @@
       margin-top: clamp(24px, 5vh, 40px);
       text-align: center;
       padding: 14px 20px;
-      border-radius: 14px;
+      border-radius: 8px;
       border: 1px solid var(--border);
       background: color-mix(in srgb, var(--bg-subtle) 50%, transparent);
     }
