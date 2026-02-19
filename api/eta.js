@@ -1,6 +1,7 @@
 const STOP_ROUTES = {
-  '001293': ['77', '99'],           // Primary: Lei King Wan (Grand Promenade)
-  '001303': ['82', '85', '102', '682'], // Plan B: Sai Wan Ho Civic Centre
+  '001293': ['77', '99'],                              // Primary: Lei King Wan (Grand Promenade)
+  '001304': ['2', '77', '82', '85', '99', '720'],     // Plan B: Tai Cheong St, SKW Rd
+  '001367': ['102', '106', '682'],                     // Plan B: Tai Fu St, SKW Rd
 };
 const BASE = 'https://rt.data.gov.hk/v2/transport/citybus/eta/CTB';
 

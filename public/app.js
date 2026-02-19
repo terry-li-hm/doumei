@@ -1,8 +1,7 @@
 /* --- Constants --- */
 
 const STOP_ID = '001293';
-const PLANB_STOP = '001303';
-// const TRAM_STOP = '10W'; // tram API dead — re-enable if it comes back
+const PLANB_STOPS = ['001304', '001367'];
 const WALK_MINS = 4;
 const RUN_MINS = 2;
 const STALE_MS = 60000;
@@ -113,12 +112,15 @@ function updatePlanB(show) {
 
 async function fetchPlanB() {
   try {
-    const busRes = await fetch(`/api/eta?stop=${PLANB_STOP}`);
+    const responses = await Promise.all(
+      PLANB_STOPS.map(s => fetch(`/api/eta?stop=${s}`))
+    );
     planBETAs = [];
 
-    if (busRes.ok) {
-      const busData = await busRes.json();
-      for (const rd of busData.data || []) {
+    for (const res of responses) {
+      if (!res.ok) continue;
+      const data = await res.json();
+      for (const rd of data.data || []) {
         for (const e of rd.data || []) {
           if (!e.eta) continue;
           const mins = minutesUntil(e.eta);
