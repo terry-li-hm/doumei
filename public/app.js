@@ -47,7 +47,7 @@ function updateDisplay() {
     hero.textContent = '?';
     route.textContent = '--';
     status.textContent = 'Stale · tap to refresh';
-    thenList.innerHTML = '';
+    thenList.textContent = '';
     return;
   }
 
