@@ -78,6 +78,20 @@
     }
     #trip-label { font-size: 20px; font-weight: 600; letter-spacing: -0.01em; }
     #trip-sublabel { font-size: 12px; color: var(--muted); margin-top: 3px; letter-spacing: 0.04em; }
+    #plan-b-toggle {
+      margin-top: 8px;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      background: none;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 4px 12px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #plan-b-toggle:active { opacity: 0.6; }
 
     main {
       flex: 1;
@@ -278,6 +292,7 @@
   <header>
     <div id="trip-label">To Kornhill</div>
     <div id="trip-sublabel">from Grand Promenade</div>
+    <button id="plan-b-toggle">Plan B</button>
   </header>
 
   <main id="main-tap">

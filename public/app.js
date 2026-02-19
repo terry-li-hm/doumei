@@ -17,6 +17,7 @@ let currentETAs = [];
 let lastFetchTime = 0;
 let planBETAs = [];
 let planBFetched = false;
+let forcePlanB = false;
 
 /* --- Helpers --- */
 
@@ -60,8 +61,12 @@ function updateDisplay() {
     return;
   }
 
-  // Hide Plan B when primary bus is available
-  document.getElementById('plan-b').hidden = true;
+  // Show Plan B if forced, otherwise hide
+  if (forcePlanB) {
+    updatePlanB(true);
+  } else {
+    document.getElementById('plan-b').hidden = true;
+  }
 
   // Primary bus
   const next = active[0];
@@ -222,6 +227,13 @@ window.addEventListener('pageshow', (e) => {
 
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('main-tap').addEventListener('click', fetchETAs);
+
+  document.getElementById('plan-b-toggle').addEventListener('click', (e) => {
+    e.stopPropagation();
+    forcePlanB = !forcePlanB;
+    e.currentTarget.textContent = forcePlanB ? 'Hide Plan B' : 'Plan B';
+    updateDisplay();
+  });
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
