@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bus-eta-v7';
+const CACHE_NAME = 'bus-eta-v8';
 
 self.addEventListener('install', () => {
   self.skipWaiting();

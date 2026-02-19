@@ -244,6 +244,21 @@
       letter-spacing: 0.03em;
     }
 
+    /* --- Grain texture overlay --- */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      opacity: 0.3;
+      filter: url(#grain);
+      mix-blend-mode: multiply;
+    }
+    @media (prefers-color-scheme: dark) {
+      body::after { mix-blend-mode: soft-light; opacity: 0.4; }
+    }
+
     /* --- Stale data dim --- */
     body.stale-data main { opacity: 0.5; transition: opacity 0.3s; }
 
@@ -255,6 +270,12 @@
   </style>
 </head>
 <body>
+  <svg style="position:absolute;width:0;height:0" aria-hidden="true">
+    <filter id="grain">
+      <feTurbulence type="fractalNoise" baseFrequency="0.65" numOctaves="3" stitchTiles="stitch"/>
+      <feColorMatrix type="saturate" values="0"/>
+    </filter>
+  </svg>
   <header>
     <div id="trip-label">To Kornhill</div>
     <div id="trip-sublabel">from Grand Promenade</div>
