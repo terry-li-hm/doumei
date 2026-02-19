@@ -236,15 +236,27 @@
     }
     #plan-b-list {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: center;
-      gap: 8px 16px;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+    .plan-b-hero {
+      font-family: 'JetBrains Mono', 'SF Mono', monospace;
+      font-size: clamp(20px, 5vw, 26px);
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      color: var(--text);
+    }
+    .plan-b-rest {
+      display: flex;
+      gap: 12px;
     }
     .plan-b-item {
       font-family: 'JetBrains Mono', 'SF Mono', monospace;
-      font-size: clamp(14px, 3.5vw, 17px);
+      font-size: clamp(12px, 3vw, 14px);
       font-variant-numeric: tabular-nums;
       color: var(--muted);
+      opacity: 0.6;
     }
 
     /* --- Updated timestamp --- */

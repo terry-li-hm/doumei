@@ -108,11 +108,19 @@ function updatePlanB(show) {
 
   el.hidden = false;
   const list = document.getElementById('plan-b-list');
-  list.innerHTML = active.slice(0, 4).map(e => {
-    const mins = minutesUntil(e.eta);
-    const text = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
-    return `<div class="plan-b-item">${e.route} · ${text}</div>`;
-  }).join('');
+  const first = active[0];
+  const firstMins = minutesUntil(first.eta);
+  const firstText = firstMins < 1 ? '<1m' : `${Math.floor(firstMins)}m`;
+
+  let html = `<div class="plan-b-hero">${first.route} · ${firstText}</div>`;
+  if (active.length > 1) {
+    html += '<div class="plan-b-rest">' + active.slice(1, 4).map(e => {
+      const mins = minutesUntil(e.eta);
+      const text = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
+      return `<span class="plan-b-item">${e.route} · ${text}</span>`;
+    }).join('') + '</div>';
+  }
+  list.innerHTML = html;
 }
 
 async function fetchPlanB() {
