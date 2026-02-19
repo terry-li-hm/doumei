@@ -15,8 +15,10 @@ let refreshTimer = null;
 let displayTimer = null;
 let currentETAs = [];
 let lastFetchTime = 0;
+let fetchController = null;
 let planBETAs = [];
 let planBFetched = false;
+let planBFetching = false;
 let forcePlanB = false;
 
 /* --- Helpers --- */
@@ -84,14 +86,16 @@ function updateDisplay() {
   status.textContent = level === 'green' ? 'Walk' : level === 'amber' ? 'Hurry' : 'RUN!';
 
   // Then list (max 1 fallback)
+  thenList.textContent = '';
   if (active.length > 1) {
     const after = active[1];
     const afterMins = minutesUntil(after.eta);
     const afterText = afterMins < 1 ? '<1m' : `${Math.floor(afterMins)}m`;
-    thenList.innerHTML = `<div class="then-item" style="color:var(--r${after.route})">`
-      + `then ${after.route} · ${afterText}</div>`;
-  } else {
-    thenList.innerHTML = '';
+    const div = document.createElement('div');
+    div.className = 'then-item';
+    div.style.color = `var(--r${after.route})`;
+    div.textContent = `then ${after.route} · ${afterText}`;
+    thenList.appendChild(div);
   }
 }
 
@@ -101,29 +105,42 @@ function updatePlanB(show) {
   const el = document.getElementById('plan-b');
   if (!show) { el.hidden = true; return; }
 
-  if (!planBFetched) { fetchPlanB(); return; }
+  if (!planBFetched && !planBFetching) { fetchPlanB(); return; }
+  if (planBFetching) return;
 
   const active = planBETAs.filter(e => minutesUntil(e.eta) > 0);
   if (active.length === 0) { el.hidden = true; return; }
 
   el.hidden = false;
   const list = document.getElementById('plan-b-list');
+  list.textContent = '';
+
   const first = active[0];
   const firstMins = minutesUntil(first.eta);
   const firstText = firstMins < 1 ? '<1m' : `${Math.floor(firstMins)}m`;
+  const heroDiv = document.createElement('div');
+  heroDiv.className = 'plan-b-hero';
+  heroDiv.textContent = `${first.route} · ${firstText}`;
+  list.appendChild(heroDiv);
 
-  let html = `<div class="plan-b-hero">${first.route} · ${firstText}</div>`;
   if (active.length > 1) {
-    html += '<div class="plan-b-rest">' + active.slice(1, 4).map(e => {
+    const restDiv = document.createElement('div');
+    restDiv.className = 'plan-b-rest';
+    active.slice(1, 4).forEach(e => {
       const mins = minutesUntil(e.eta);
       const text = mins < 1 ? '<1m' : `${Math.floor(mins)}m`;
-      return `<span class="plan-b-item">${e.route} · ${text}</span>`;
-    }).join('') + '</div>';
+      const span = document.createElement('span');
+      span.className = 'plan-b-item';
+      span.textContent = `${e.route} · ${text}`;
+      restDiv.appendChild(span);
+    });
+    list.appendChild(restDiv);
   }
-  list.innerHTML = html;
 }
 
 async function fetchPlanB() {
+  if (planBFetching) return;
+  planBFetching = true;
   try {
     const responses = await Promise.all(
       PLANB_STOPS.map(s => fetch(`/api/eta?stop=${s}`))
@@ -149,6 +166,8 @@ async function fetchPlanB() {
     updatePlanB(true);
   } catch (err) {
     console.error('Plan B fetch error:', err);
+  } finally {
+    planBFetching = false;
   }
 }
 
@@ -180,8 +199,10 @@ function renderUI(data, stale) {
 }
 
 async function fetchETAs() {
+  if (fetchController) fetchController.abort();
+  fetchController = new AbortController();
   try {
-    const res = await fetch(`/api/eta?stop=${STOP_ID}`);
+    const res = await fetch(`/api/eta?stop=${STOP_ID}`, { signal: fetchController.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     localStorage.setItem(CACHE_KEY, JSON.stringify(data));
@@ -190,6 +211,7 @@ async function fetchETAs() {
     document.body.classList.remove('stale-data');
     renderUI(data, false);
   } catch (err) {
+    if (err.name === 'AbortError') return;
     console.error('Fetch error:', err);
     document.getElementById('updated').textContent = 'Error · tap to retry';
   }
@@ -204,10 +226,11 @@ function loadCached() {
 
 /* --- Lifecycle --- */
 
-function startPolling() { fetchETAs(); refreshTimer = setInterval(fetchETAs, POLL_MS); }
+function startPolling() { stopPolling(); fetchETAs(); refreshTimer = setInterval(fetchETAs, POLL_MS); }
 function stopPolling() { clearInterval(refreshTimer); refreshTimer = null; }
 
 function startDisplay() {
+  stopDisplay();
   function tick() {
     updateDisplay();
     displayTimer = setTimeout(tick, 1000 - (Date.now() % 1000));

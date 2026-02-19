@@ -5,12 +5,13 @@ const STOP_ROUTES = {
 };
 const BASE = 'https://rt.data.gov.hk/v2/transport/citybus/eta/CTB';
 
-function corsHeaders(origin) {
+function corsHeaders() {
   const allowed = process.env.ALLOWED_ORIGIN || '*';
   return {
     'Access-Control-Allow-Origin': allowed,
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
     'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
   };
 }
 
@@ -33,14 +34,14 @@ export async function GET(request) {
         headers: { Accept: 'application/json' },
       })
         .then(async (res) => {
-          if (!res.ok) return { route, data: [], error: res.status };
+          if (!res.ok) return { route, data: [] };
           const ct = res.headers.get('content-type') || '';
           if (!ct.includes('application/json'))
-            return { route, data: [], error: 'bad content-type' };
+            return { route, data: [] };
           const json = await res.json();
           return { route, data: json.data || [] };
         })
-        .catch((err) => ({ route, data: [], error: err.name }))
+        .catch(() => ({ route, data: [] }))
     )
   );
 
