@@ -225,6 +225,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js');
 
+  /* Sync theme-color with color scheme */
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) {
+    const mq = window.matchMedia('(prefers-color-scheme: dark)');
+    const sync = () => { meta.content = mq.matches ? '#0C0C0C' : '#F3F3EE'; };
+    sync();
+    mq.addEventListener('change', sync);
+  }
+
   loadCached();
   startPolling();
   startDisplay();
